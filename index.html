@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>GRE Elite</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="loader" class="fullscreen-overlay">
+        <div class="spinner" id="spinner-icon"></div>
+        <p id="loader-text">INITIALIZING APP...</p>
+    </div>
+
+    <div id="entry-screen" class="fullscreen-overlay" style="display:none; z-index: 150;">
+        <div class="entry-card">
+            <div>
+                <h1 class="app-title">GRE Elite</h1>
+                <p class="subtitle">Select your study library.</p>
+            </div>
+            
+            <div id="dataset-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+            <div class="data-controls">
+                <button class="btn-data" onclick="exportData()">💾 Save Offline Backup</button>
+                <button class="btn-data" onclick="document.getElementById('file-upload').click()">📂 Load Backup</button>
+                <button class="btn-data" onclick="forceRefreshLibrary()" id="btn-reload" style="display:none;">🔄 Force Update Dataset</button>
+                <input type="file" id="file-upload" style="display:none" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        
+        <div id="dashboard">
+            <div class="stats-bar">
+                <div class="stat-group">
+                    <div class="stat-item"><span class="stat-label">SCORE</span><div id="dash-score" class="stat-value">0</div></div>
+                    <div class="stat-item"><span class="stat-label">MASTERED</span><div id="dash-mastered" class="stat-value stat-success">0</div></div>
+                </div>
+                <div class="stat-item" style="text-align: right;">
+                    <span class="stat-label" id="dash-dataset-name">LIBRARY</span><div id="dash-total" class="stat-value stat-neutral">0</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <h3 class="section-title">Study Decks</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-data" style="margin:0;" onclick="toggleTheme()">🎨 Theme</button>
+                    <button class="btn-data" style="margin:0;" onclick="showEntryScreen()">Library</button>
+                </div>
+            </div>
+
+            <button class="btn-review" id="dash-review-mistakes" onclick="enterApp('memory')" style="margin-top: 0; display: none;">
+                Review <span id="dash-mistake-count">0</span> Focus Words
+            </button>
+
+            <div id="deck-container" class="deck-grid"></div>
+        </div>
+
+        <div id="main-ui">
+            <div class="stats-bar">
+                <div class="stat-group">
+                    <div class="stat-item"><span class="stat-label">SCORE</span><div id="score" class="stat-value">0</div></div>
+                    <div class="stat-item"><span class="stat-label">STREAK</span><div id="streak" class="stat-value">0</div></div>
+                </div>
+                <button class="btn-exit" onclick="exitToDashboard()">Exit Deck</button>
+            </div>
+
+            <div class="quiz-card" id="touch-surface">
+                <div class="card-left">
+                    <div class="type-badge" id="question-type-badge" style="display:none;">Definition</div>
+                    <div id="word-display">WORD</div>
+                    <div id="hint-box" title="Tap to generate a new image">
+                        <img id="hint-img" src="" alt="hint">
+                    </div>
+                </div>
+                <div class="card-right" id="options-list">
+                    </div>
+            </div>
+            <div class="swipe-hint">
+                <span>👈 Swipe Back</span>
+                <span>Swipe Next 👉</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
