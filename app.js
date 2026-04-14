@@ -84,15 +84,12 @@ function toggleTheme() {
     currentThemeIndex++;
     if (currentThemeIndex >= themes.length) currentThemeIndex = 0;
     
-    // Remove all previous theme classes
     document.body.className = '';
     
-    // Add the new theme class (if it's not the default empty string)
     if (themes[currentThemeIndex] !== '') {
         document.body.classList.add(themes[currentThemeIndex]);
     }
     
-    // Ensure fullscreen remains enforced after clicking
     enforceFullscreen();
 }
 
@@ -104,7 +101,6 @@ function enforceFullscreen() {
     var docEl = doc.documentElement;
     var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
     
-    // Preserve current theme classes while setting pseudo-fullscreen
     let themeClass = themes[currentThemeIndex];
     
     if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
@@ -116,7 +112,7 @@ function enforceFullscreen() {
             document.body.className = themeClass ? themeClass + ' pseudo-fullscreen' : 'pseudo-fullscreen';
         }
     } else {
-        document.body.className = themeClass; // Remove pseudo-fullscreen if native works
+        document.body.className = themeClass; 
     }
 }
 
@@ -217,7 +213,6 @@ function goBack() {
 
 function generateQuestion() {
     if (activeDeck.length === 0) {
-        // NON-CYCLIC FIX: If deck is empty, immediately exit to dashboard instead of alerting
         exitToDashboard();
         return;
     }
@@ -315,34 +310,38 @@ function displayQuestion(qObj) {
     document.getElementById('word-display').innerText = qObj.displayPrompt;
     
     // ==========================================
-    // IMAGE HANDLING & REFRESH LOGIC
+    // RELEVANT + SAFE WIKIPEDIA IMAGE LOGIC
     // ==========================================
     var hintImg = document.getElementById('hint-img');
     var hintBox = document.getElementById('hint-box');
     hintImg.style.opacity = '0'; 
+    hintBox.style.display = 'none'; // Default to hidden to save screen space!
     
-    let safeImgQuery = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+    async function fetchRelevantImage(word) {
+        try {
+            // Strip out non-letters (e.g., "(to) abate" -> "abate")
+            let cleanWord = word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+            
+            // Ask Wikipedia API for an educational image (No API key required!)
+            let res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${cleanWord}&prop=pageimages&format=json&pithumbsize=400&origin=*`);
+            let data = await res.json();
+            let pages = data.query.pages;
+            let pageId = Object.keys(pages)[0];
+            
+            // If Wikipedia has a thumbnail for this word, display it!
+            if (pageId !== "-1" && pages[pageId].thumbnail) {
+                hintImg.src = pages[pageId].thumbnail.source;
+                hintBox.style.display = 'block';
+                hintImg.onload = function() { hintImg.style.opacity = '1'; };
+            }
+            // If no image exists, the box simply remains hidden, maximizing screen space!
+        } catch(e) {
+            // Fails silently, leaving screen space open
+        }
+    }
     
-    // Function to generate and load the image
-    const fetchNewImage = () => {
-        hintImg.style.opacity = '0';
-        var tempImg = new Image();
-        tempImg.onload = function() { 
-            hintImg.src = tempImg.src; 
-            hintImg.style.opacity = '1'; 
-        };
-        // Append a random number to the seed so the abstract art changes on click
-        let randomSeedModifier = Math.floor(Math.random() * 10000);
-        tempImg.src = "https://api.dicebear.com/8.x/shapes/svg?seed=" + encodeURIComponent(safeImgQuery) + randomSeedModifier;
-    };
-
-    // Load initial image
-    fetchNewImage();
-
-    // Make the box clickable to fetch a new image
-    hintBox.onclick = function() {
-        if(canAnswer) fetchNewImage(); // Only allow clicking while question is active
-    };
+    // Trigger the safe search
+    fetchRelevantImage(qObj.wordRef);
 
     // ==========================================
     // OPTIONS & ANSWER HANDLING
@@ -382,8 +381,6 @@ function displayQuestion(qObj) {
                 var mIndex = pData.mastered.indexOf(qObj.wordRef);
                 if(mIndex > -1) pData.mastered.splice(mIndex, 1);
 
-                // NON-CYCLIC FIX: We no longer push the wrong word back into the activeDeck!
-                // It just gets saved to Mistakes, and the user continues to the end of the deck.
                 if (currentMode === 'normal') {
                     pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
                 }
