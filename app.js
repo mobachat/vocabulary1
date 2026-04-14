@@ -85,11 +85,9 @@ function toggleTheme() {
     if (currentThemeIndex >= themes.length) currentThemeIndex = 0;
     
     document.body.className = '';
-    
     if (themes[currentThemeIndex] !== '') {
         document.body.classList.add(themes[currentThemeIndex]);
     }
-    
     enforceFullscreen();
 }
 
@@ -295,6 +293,80 @@ function generateQuestion() {
     displayQuestion(questionObj);
 }
 
+// ==========================================
+// OFFLINE SEMANTIC EMOJI ENGINE
+// ==========================================
+function getSemanticEmoji(def) {
+    const d = def.toLowerCase();
+    
+    // The dictionary mapping GRE concepts to visual Emojis
+    const emojiMap = [
+        { words: ['speak', 'say', 'talk', 'speech', 'word', 'voice', 'language', 'argue', 'criticize', 'scold'], emoji: '🗣️' },
+        { words: ['write', 'writing', 'book', 'paper', 'read', 'document', 'text'], emoji: '✍️' },
+        { words: ['time', 'old', 'ancient', 'early', 'late', 'history', 'past', 'future', 'delay'], emoji: '⏳' },
+        { words: ['good', 'praise', 'approve', 'positive', 'virtue', 'beneficial', 'help'], emoji: '👍' },
+        { words: ['bad', 'harm', 'damage', 'evil', 'wrong', 'sin', 'corrupt', 'ruin'], emoji: '⚠️' },
+        { words: ['money', 'wealth', 'rich', 'poor', 'buy', 'sell', 'economy', 'finance', 'greed'], emoji: '💰' },
+        { words: ['mind', 'think', 'reason', 'logic', 'smart', 'know', 'understand', 'memory'], emoji: '🧠' },
+        { words: ['feel', 'emotion', 'love', 'hate', 'heart', 'passion', 'sympathy'], emoji: '❤️' },
+        { words: ['water', 'liquid', 'flow', 'drink', 'sea', 'ocean', 'river', 'wash'], emoji: '🌊' },
+        { words: ['fire', 'heat', 'burn', 'hot', 'flame', 'ash'], emoji: '🔥' },
+        { words: ['light', 'bright', 'shine', 'sun', 'clear', 'illuminate'], emoji: '☀️' },
+        { words: ['dark', 'black', 'night', 'shadow', 'dim', 'obscure'], emoji: '🌑' },
+        { words: ['plant', 'tree', 'grow', 'leaf', 'nature', 'seed', 'root'], emoji: '🌱' },
+        { words: ['people', 'crowd', 'group', 'person', 'society', 'public'], emoji: '👥' },
+        { words: ['build', 'structure', 'house', 'city', 'make', 'create', 'foundation'], emoji: '🏗️' },
+        { words: ['travel', 'journey', 'walk', 'run', 'move', 'go', 'wander'], emoji: '🚶' },
+        { words: ['fight', 'war', 'battle', 'attack', 'conflict', 'violence'], emoji: '⚔️' },
+        { words: ['peace', 'calm', 'quiet', 'still', 'rest', 'soothe'], emoji: '🕊️' },
+        { words: ['law', 'rule', 'judge', 'court', 'legal', 'crime', 'punish'], emoji: '⚖️' },
+        { words: ['holy', 'sacred', 'religion', 'god', 'divine', 'worship', 'church'], emoji: '⛪' },
+        { words: ['art', 'music', 'paint', 'create', 'song', 'sing', 'dance'], emoji: '🎨' },
+        { words: ['science', 'study', 'measure', 'test', 'observe', 'math'], emoji: '🔬' },
+        { words: ['food', 'eat', 'taste', 'hunger', 'meal', 'cook', 'sweet', 'sour'], emoji: '🍽️' },
+        { words: ['sick', 'ill', 'disease', 'health', 'cure', 'heal', 'doctor'], emoji: '🏥' },
+        { words: ['happy', 'joy', 'laugh', 'smile', 'glad', 'cheerful'], emoji: '😄' },
+        { words: ['sad', 'cry', 'sorrow', 'grief', 'depress', 'mourn'], emoji: '😢' },
+        { words: ['fear', 'afraid', 'terror', 'panic', 'scare', 'timid'], emoji: '😨' },
+        { words: ['angry', 'mad', 'rage', 'fury', 'wrath', 'temper'], emoji: '😠' },
+        { words: ['surprise', 'shock', 'amaze', 'wonder', 'sudden', 'astonish'], emoji: '😲' },
+        { words: ['secret', 'hide', 'mystery', 'unknown', 'stealth', 'conceal'], emoji: '🕵️' },
+        { words: ['power', 'strong', 'force', 'might', 'energy', 'dominate'], emoji: '💪' },
+        { words: ['weak', 'frail', 'fragile', 'faint', 'feeble', 'vulnerable'], emoji: '🥀' },
+        { words: ['fast', 'quick', 'speed', 'rapid', 'swift', 'hasty'], emoji: '⚡' },
+        { words: ['slow', 'sluggish', 'delay', 'late', 'tarry', 'hesitate'], emoji: '🐢' },
+        { words: ['large', 'big', 'huge', 'giant', 'massive', 'enormous'], emoji: '🐘' },
+        { words: ['small', 'tiny', 'little', 'mini', 'micro', 'brief'], emoji: '🐜' },
+        { words: ['stop', 'end', 'halt', 'cease', 'terminate', 'prevent'], emoji: '🛑' },
+        { words: ['start', 'begin', 'origin', 'create', 'initiate'], emoji: '🎬' }
+    ];
+
+    let foundEmojis = [];
+    
+    // Scan definition for keywords
+    for (let category of emojiMap) {
+        for (let word of category.words) {
+            let regex = new RegExp("\\b" + word + "\\b", "i");
+            if (regex.test(d)) {
+                foundEmojis.push(category.emoji);
+                break; // Move to next category to avoid spamming the same emoji
+            }
+        }
+        if (foundEmojis.length >= 2) break; // Maximum 2 emojis to look clean
+    }
+
+    if (foundEmojis.length > 0) return foundEmojis.join(' ');
+    
+    // Fallback for highly abstract words that don't hit keywords
+    const fallbacks = ['📚', '🧠', '🎓', '💡', '📖', '🎯'];
+    let hash = 0;
+    for (let i = 0; i < def.length; i++) {
+        hash = def.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return fallbacks[Math.abs(hash) % fallbacks.length];
+}
+
+
 function displayQuestion(qObj) {
     canAnswer = true;
     enforceFullscreen(); 
@@ -310,38 +382,19 @@ function displayQuestion(qObj) {
     document.getElementById('word-display').innerText = qObj.displayPrompt;
     
     // ==========================================
-    // RELEVANT + SAFE WIKIPEDIA IMAGE LOGIC
+    // RENDER SEMANTIC EMOJIS
     // ==========================================
-    var hintImg = document.getElementById('hint-img');
     var hintBox = document.getElementById('hint-box');
-    hintImg.style.opacity = '0'; 
-    hintBox.style.display = 'none'; // Default to hidden to save screen space!
+    var hintImg = document.getElementById('hint-img'); // We hide the actual image tag
     
-    async function fetchRelevantImage(word) {
-        try {
-            // Strip out non-letters (e.g., "(to) abate" -> "abate")
-            let cleanWord = word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-            
-            // Ask Wikipedia API for an educational image (No API key required!)
-            let res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${cleanWord}&prop=pageimages&format=json&pithumbsize=400&origin=*`);
-            let data = await res.json();
-            let pages = data.query.pages;
-            let pageId = Object.keys(pages)[0];
-            
-            // If Wikipedia has a thumbnail for this word, display it!
-            if (pageId !== "-1" && pages[pageId].thumbnail) {
-                hintImg.src = pages[pageId].thumbnail.source;
-                hintBox.style.display = 'block';
-                hintImg.onload = function() { hintImg.style.opacity = '1'; };
-            }
-            // If no image exists, the box simply remains hidden, maximizing screen space!
-        } catch(e) {
-            // Fails silently, leaving screen space open
-        }
-    }
+    hintBox.style.display = 'flex';
+    hintBox.style.justifyContent = 'center';
+    hintBox.style.alignItems = 'center';
+    hintBox.style.fontSize = '80px';
+    hintImg.style.display = 'none'; // Hide the image tag entirely
     
-    // Trigger the safe search
-    fetchRelevantImage(qObj.wordRef);
+    // Ask the Engine to read the definition and provide relevant emojis
+    hintBox.innerText = getSemanticEmoji(qObj.target.def);
 
     // ==========================================
     // OPTIONS & ANSWER HANDLING
