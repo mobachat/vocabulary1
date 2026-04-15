@@ -266,89 +266,97 @@ function generateQuestion() {
 
 
 // ==========================================
-// PARAMETRIC ANIMATED FACE ENGINE
+// V2.0 ROOT-STEM NLP EMOTION ENGINE
 // ==========================================
-// This injects standard keyframes into the document head if they don't exist
 if (!document.getElementById('face-animations')) {
     const style = document.createElement('style');
     style.id = 'face-animations';
     style.innerHTML = `
-        @keyframes face-shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-        @keyframes face-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes face-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-        @keyframes face-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes face-shake { 0% { transform: translateX(0); } 25% { transform: translateX(-8px) rotate(-5deg); } 50% { transform: translateX(8px) rotate(5deg); } 75% { transform: translateX(-8px) rotate(-5deg); } 100% { transform: translateX(0); } }
+        @keyframes face-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes face-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes face-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes face-sway { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
     `;
     document.head.appendChild(style);
 }
 
-function getAnimatedFace(def) {
-    if (!def) def = "";
+function getExpression(def) {
+    if (!def) return { face: '🤔', anim: 'face-float 4s infinite' };
     const d = def.toLowerCase();
-    
-    // Default: Neutral/Thinking Face
-    let color = "#fbbf24"; // Amber/Yellow
-    let eyebrows = `<path d="M 30 35 Q 40 30 50 35" stroke="#451a03" stroke-width="4" fill="none" stroke-linecap="round"/> <path d="M 70 35 Q 80 30 90 35" stroke="#451a03" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-    let eyes = `<circle cx="40" cy="50" r="5" fill="#451a03"/> <circle cx="80" cy="50" r="5" fill="#451a03"/>`;
-    let mouth = `<path d="M 40 70 Q 60 70 80 70" stroke="#451a03" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-    let animation = "face-float 3s ease-in-out infinite";
 
-    // 1. Angry / Hostile (Red, downward inner brows, frown, shaking)
-    if (/\b(angry|mad|rage|fury|wrath|temper|hostile|attack|fight|violence)\b/.test(d)) {
-        color = "#ef4444"; // Red
-        eyebrows = `<line x1="30" y1="30" x2="50" y2="40" stroke="#451a03" stroke-width="5" stroke-linecap="round"/> <line x1="70" y1="40" x2="90" y2="30" stroke="#451a03" stroke-width="5" stroke-linecap="round"/>`;
-        mouth = `<path d="M 35 80 Q 60 65 85 80" stroke="#451a03" stroke-width="5" fill="none" stroke-linecap="round"/>`;
-        animation = "face-shake 0.5s infinite";
-    }
-    // 2. Happy / Good (Yellow, high brows, big smile, bouncing)
-    else if (/\b(happy|joy|glad|cheerful|good|praise|friendly|amicable|love)\b/.test(d)) {
-        color = "#fcd34d"; // Bright Yellow
-        eyebrows = `<path d="M 30 30 Q 40 20 50 30" stroke="#451a03" stroke-width="3" fill="none" stroke-linecap="round"/> <path d="M 70 30 Q 80 20 90 30" stroke="#451a03" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-        mouth = `<path d="M 30 65 Q 60 95 90 65" stroke="#451a03" stroke-width="5" fill="none" stroke-linecap="round"/>`;
-        animation = "face-bounce 2s infinite";
-    }
-    // 3. Sad / Depressed (Blue, downward outer brows, deep frown, slow pulse)
-    else if (/\b(sad|cry|sorrow|grief|depress|mourn|gloomy|morose|bleak)\b/.test(d)) {
-        color = "#60a5fa"; // Blue
-        eyebrows = `<line x1="30" y1="40" x2="50" y2="30" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/> <line x1="70" y1="30" x2="90" y2="40" stroke="#1e3a8a" stroke-width="4" stroke-linecap="round"/>`;
-        eyes = `<circle cx="40" cy="55" r="5" fill="#1e3a8a"/> <circle cx="80" cy="55" r="5" fill="#1e3a8a"/> <path d="M 40 65 L 40 75" stroke="#60a5fa" stroke-width="2"/>`; // Tears
-        mouth = `<path d="M 35 80 Q 60 60 85 80" stroke="#1e3a8a" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-        animation = "face-pulse 4s infinite";
-    }
-    // 4. Surprised / Shocked (Yellow, high dot brows, O mouth, fast pulse)
-    else if (/\b(surprise|shock|amaze|wonder|sudden|astonish|stun)\b/.test(d)) {
-        color = "#fde047";
-        eyebrows = `<circle cx="40" cy="25" r="3" fill="#451a03"/> <circle cx="80" cy="25" r="3" fill="#451a03"/>`;
-        eyes = `<circle cx="40" cy="45" r="6" fill="#451a03"/> <circle cx="80" cy="45" r="6" fill="#451a03"/>`;
-        mouth = `<circle cx="60" cy="75" r="10" fill="#451a03"/>`;
-        animation = "face-pulse 1s infinite";
-    }
-    // 5. Confused / Complex (Purple/Grey, asymmetrical brows, squiggly mouth)
-    else if (/\b(confuse|baffle|perplex|puzzle|mystery|complex|obscure|unclear)\b/.test(d)) {
-        color = "#c084fc"; // Purple
-        eyebrows = `<line x1="30" y1="35" x2="50" y2="25" stroke="#4a044e" stroke-width="4" stroke-linecap="round"/> <line x1="70" y1="35" x2="90" y2="35" stroke="#4a044e" stroke-width="4" stroke-linecap="round"/>`;
-        mouth = `<path d="M 35 75 Q 45 65 55 75 T 75 75" stroke="#4a044e" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-        animation = "face-float 4s infinite";
-    }
-    // 6. Scary / Evil (Dark purple/black, sharp brows, jagged mouth)
-    else if (/\b(fear|terror|evil|sinister|wicked|harm|danger)\b/.test(d)) {
-        color = "#374151"; // Dark grey
-        eyebrows = `<line x1="25" y1="20" x2="55" y2="45" stroke="#111827" stroke-width="6" stroke-linecap="round"/> <line x1="95" y1="20" x2="65" y2="45" stroke="#111827" stroke-width="6" stroke-linecap="round"/>`;
-        eyes = `<circle cx="40" cy="50" r="4" fill="#ef4444"/> <circle cx="80" cy="50" r="4" fill="#ef4444"/>`; // Red eyes
-        mouth = `<path d="M 30 75 L 45 85 L 60 70 L 75 85 L 90 75" stroke="#111827" stroke-width="4" fill="none" stroke-linejoin="miter"/>`;
-        animation = "face-pulse 2s infinite";
+    // Instead of full words, we search for root stems so it catches 10x more variations!
+    // Example: 'angr' catches 'angry', 'angrily', 'angered'.
+    const emotions = [
+        {
+            roots: ['angr', 'mad', 'rage', 'furi', 'wrath', 'temper', 'hostil', 'attack', 'fight', 'violen', 'irat', 'resent', 'indign', 'provok', 'offend', 'scold', 'berat', 'rebuk', 'argu', 'critic'],
+            face: '🤬', anim: 'face-shake 0.4s infinite'
+        },
+        {
+            roots: ['sad', 'cry', 'sorrow', 'grief', 'depress', 'mourn', 'gloom', 'moros', 'bleak', 'melanchol', 'lament', 'despair', 'regret', 'traged'],
+            face: '😢', anim: 'face-pulse 3s infinite'
+        },
+        {
+            roots: ['happ', 'joy', 'glad', 'cheer', 'good', 'prais', 'friend', 'amicabl', 'love', 'delight', 'elat', 'euphor', 'rejoic', 'celebr', 'approv', 'smile', 'optimis'],
+            face: '🤩', anim: 'face-bounce 1.5s infinite'
+        },
+        {
+            roots: ['fear', 'terror', 'panic', 'scare', 'timid', 'afraid', 'anxi', 'dread', 'phobia', 'intimid', 'coward', 'trepid', 'nerv'],
+            face: '😨', anim: 'face-shake 0.2s infinite'
+        },
+        {
+            roots: ['confus', 'baffl', 'perplex', 'puzzl', 'myster', 'complex', 'obscur', 'unclear', 'enigma', 'ambigu', 'bewild', 'confound', 'cryptic', 'secret', 'hide'],
+            face: '😵‍💫', anim: 'face-float 4s infinite'
+        },
+        {
+            roots: ['disgust', 'mock', 'sarcasm', 'disdain', 'scorn', 'despis', 'contempt', 'hate', 'vile', 'repuls', 'loath', 'ridicul', 'cynic', 'sneer'],
+            face: '😒', anim: 'face-sway 3s infinite'
+        },
+        {
+            roots: ['surpris', 'shock', 'amaz', 'wonder', 'sudden', 'astonish', 'stun', 'startl', 'astound'],
+            face: '🤯', anim: 'face-pulse 0.8s infinite'
+        },
+        {
+            roots: ['mind', 'think', 'reason', 'logic', 'smart', 'know', 'understand', 'memor', 'wise', 'scholar', 'intellig', 'astut', 'sagaci', 'intellect', 'study', 'scienc', 'math'],
+            face: '🤓', anim: 'face-float 3s infinite'
+        },
+        {
+            roots: ['sleep', 'bore', 'slow', 'sluggish', 'delay', 'late', 'tarry', 'hesit', 'tedious', 'dull', 'letharg', 'dormant', 'somnolent', 'tired', 'lazy'],
+            face: '🥱', anim: 'face-pulse 4s infinite'
+        },
+        {
+            roots: ['evil', 'sinister', 'wick', 'harm', 'danger', 'deceit', 'trick', 'lie', 'cheat', 'fraud', 'sly', 'malici', 'treacher', 'insidi', 'corrupt', 'ruin', 'bad'],
+            face: '😈', anim: 'face-float 2s infinite'
+        },
+        {
+            roots: ['power', 'strong', 'forc', 'might', 'energy', 'dominat', 'larg', 'big', 'huge', 'giant', 'massiv', 'enorm', 'build', 'creat'],
+            face: '😤', anim: 'face-pulse 1.5s infinite'
+        },
+        {
+            roots: ['weak', 'frail', 'fragil', 'faint', 'feebl', 'vulnerabl', 'small', 'tini', 'littl', 'mini', 'micro', 'brief', 'stop', 'end', 'halt', 'ceas'],
+            face: '🥺', anim: 'face-pulse 3s infinite'
+        }
+    ];
+
+    // Scan definition for root stems
+    for (let emo of emotions) {
+        for (let root of emo.roots) {
+            // Check if the root appears anywhere at the start of a word in the definition
+            if (new RegExp("\\b" + root, "i").test(d)) {
+                return { face: emo.face, anim: emo.anim };
+            }
+        }
     }
 
-    // Combine into final SVG string with animation applied to the wrapper
-    return `
-        <div style="width: 120px; height: 120px; animation: ${animation};">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
-                <circle cx="60" cy="60" r="55" fill="${color}" stroke="rgba(0,0,0,0.1)" stroke-width="4"/>
-                ${eyebrows}
-                ${eyes}
-                ${mouth}
-            </svg>
-        </div>
-    `;
+    // If a word is so rare it STILL misses, pick a pseudo-random expression based on word length
+    const fallbacks = [
+        { face: '😐', anim: 'face-float 4s infinite' },
+        { face: '😶', anim: 'face-float 4s infinite' },
+        { face: '🙂', anim: 'face-float 4s infinite' },
+        { face: '🤔', anim: 'face-float 4s infinite' },
+        { face: '😌', anim: 'face-float 4s infinite' }
+    ];
+    return fallbacks[def.length % fallbacks.length];
 }
 
 
@@ -367,7 +375,7 @@ function displayQuestion(qObj) {
     document.getElementById('word-display').innerText = qObj.displayPrompt;
     
     // ==========================================
-    // RENDER THE PARAMETRIC FACE 
+    // RENDER THE NLP FACE ENGINE
     // ==========================================
     var hintBox = document.getElementById('hint-box');
     
@@ -375,15 +383,22 @@ function displayQuestion(qObj) {
     hintBox.style.justifyContent = 'center';
     hintBox.style.alignItems = 'center';
     hintBox.style.padding = '10px 0';
-    hintBox.style.background = 'transparent'; // Remove the dark background box
+    hintBox.style.background = 'transparent';
     hintBox.style.border = 'none';
     hintBox.style.boxShadow = 'none';
     
-    // Generate the face based on the definition!
     if (qObj.target.customImage) {
-        hintBox.innerHTML = `<img src="${qObj.target.customImage}" style="max-height: 140px; border-radius: 15px;">`;
+        hintBox.innerHTML = `<img src="${qObj.target.customImage}" style="max-height: 160px; border-radius: 15px;">`;
     } else {
-        hintBox.innerHTML = getAnimatedFace(qObj.target.def);
+        // Feed the definition into the NLP Lexicon
+        let expression = getExpression(qObj.target.def);
+        
+        // Wrap the native emoji in a massive text container and apply the animation!
+        hintBox.innerHTML = `
+            <div style="font-size: 110px; animation: ${expression.anim}; text-shadow: 0 10px 20px rgba(0,0,0,0.2); filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));">
+                ${expression.face}
+            </div>
+        `;
     }
 
     // ==========================================
