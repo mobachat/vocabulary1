@@ -701,46 +701,58 @@
         // --- Proxy Solution for Strict CDNs ---
         function cleanImageLink(url) {
             if (!url) return '';
-            
-            // If it's a strict CDN (Pexels, Pixabay), route it through a free CORS proxy
-            // This bypasses their "opaque response" lock and allows the Canvas Brightness Engine to scan the pixels
             if (url.includes('pexels.com') || url.includes('pixabay.com')) {
                 return 'https://corsproxy.io/?' + encodeURIComponent(url);
             }
-            
             return url; 
         }
 
-        // --- On-Device AI Brightness Evaluator ---
+        // --- HIGH-PERFORMANCE AGGRESSIVE BRIGHTNESS ENGINE ---
         function applySmartContrast(imgElement) {
             try {
                 let canvas = document.createElement('canvas');
-                canvas.width = imgElement.naturalWidth || imgElement.width;
-                canvas.height = imgElement.naturalHeight || imgElement.height;
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(imgElement, 0, 0);
                 
-                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                // Downscale to 64x64. This forces the browser to evaluate every pixel instantly 
+                // without skipping, resulting in a much more accurate brightness score.
+                canvas.width = 64;
+                canvas.height = 64;
+                
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(imgElement, 0, 0, 64, 64);
+                
+                let imageData = ctx.getImageData(0, 0, 64, 64);
                 let data = imageData.data;
                 let colorSum = 0;
 
-                // Sample pixels for speed
-                for(let x = 0, len = data.length; x < len; x+=16) {
-                    let r = data[x]; let g = data[x+1]; let b = data[x+2];
-                    colorSum += Math.floor((r*299 + g*587 + b*114) / 1000);
+                // Accurately sum the perceived luminance of the whole image
+                for(let i = 0; i < data.length; i += 4) {
+                    let r = data[i]; 
+                    let g = data[i+1]; 
+                    let b = data[i+2];
+                    colorSum += (r*299 + g*587 + b*114) / 1000;
                 }
                 
-                let brightness = colorSum / (data.length / 16);
+                // Calculate average (max is 255)
+                let brightness = colorSum / (64 * 64);
+                
+                // Debug log to show you the math working in real-time
+                console.log("Image Brightness Score:", brightness.toFixed(2));
 
-                if(brightness < 50) {
-                    imgElement.style.filter = "brightness(1.8) contrast(1.3)";
-                } else if (brightness < 90) {
-                    imgElement.style.filter = "brightness(1.4) contrast(1.2)";
+                // Massive Boost thresholds 
+                if(brightness < 60) {
+                    // Extreme Dark - Huge boost + saturation recovery
+                    imgElement.style.filter = "brightness(3.0) contrast(1.3) saturate(1.4)";
+                } else if (brightness < 110) {
+                    // Dark
+                    imgElement.style.filter = "brightness(1.8) contrast(1.2) saturate(1.2)";
+                } else if (brightness < 150) {
+                    // Slightly Dark
+                    imgElement.style.filter = "brightness(1.3) contrast(1.1)";
                 } else {
                     imgElement.style.filter = "none";
                 }
             } catch(e) {
-                // Ignore silent canvas extraction failures
+                console.log("Brightness engine skipped due to strict CORS.");
             }
         }
 
@@ -788,7 +800,7 @@
             tempImg.crossOrigin = "Anonymous";
 
             tempImg.onload = function() { 
-                applySmartContrast(this); // Brightness Engine will now run successfully!
+                applySmartContrast(this); // Advanced Brightness Engine will now run successfully!
                 hintImg.style.filter = this.style.filter;
                 hintImg.src = this.src; 
                 hintImg.style.opacity = '1'; 
@@ -803,7 +815,7 @@
                     hintImg.style.opacity = '1';
                 };
                 cleanFallbackImg.onerror = function() {
-                    // Total failure, fallback to reliable Picsum placeholder
+                    // Total failure, fallback to reliable placeholder
                     let ultimateFallback = new Image();
                     ultimateFallback.onload = function() {
                         hintImg.style.filter = 'none';
