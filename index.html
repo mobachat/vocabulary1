@@ -704,6 +704,11 @@
             if (url.includes('pexels.com') || url.includes('pixabay.com')) {
                 return 'https://corsproxy.io/?' + encodeURIComponent(url);
             }
+            if (url.includes('drive.google.com')) {
+                let idMatch = url.match(/[-\w]{25,}/);
+                if (idMatch) return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w600`;
+            }
+            if (url.includes('dropbox.com')) return url.replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com');
             return url; 
         }
 
@@ -729,13 +734,10 @@
                     let b = data[i+2];
                     let a = data[i+3];
 
-                    // Tally pixels that are heavily transparent
                     if (a < 250) {
                         transparentPixels++;
                     }
 
-                    // Pre-blend pixel color with a white background based on its alpha level 
-                    // This ensures transparent dark sketches are correctly math-scored as "Black on White" rather than "Pitch Black"
                     let alphaRatio = a / 255;
                     let blendedR = (r * alphaRatio) + (255 * (1 - alphaRatio));
                     let blendedG = (g * alphaRatio) + (255 * (1 - alphaRatio));
@@ -746,10 +748,9 @@
                 
                 let brightness = colorSum / (64 * 64);
 
-                // If more than 5% of the image has transparency, slap a white background on it.
                 if (transparentPixels > (64 * 64 * 0.05)) {
                     imgElement.style.backgroundColor = "#ffffff";
-                    imgElement.style.padding = "5px"; // Slight padding makes it look like a clean flashcard
+                    imgElement.style.padding = "5px"; 
                     imgElement.style.borderRadius = "10px";
                 } else {
                     imgElement.style.backgroundColor = "transparent";
@@ -757,7 +758,6 @@
                     imgElement.style.borderRadius = "0";
                 }
 
-                // Normal photo enhancement thresholds
                 if(brightness < 60) {
                     imgElement.style.filter = "brightness(3.0) contrast(1.3) saturate(1.4)";
                 } else if (brightness < 110) {
@@ -768,7 +768,12 @@
                     imgElement.style.filter = "none";
                 }
             } catch(e) {
-                // If cors fails, silently proceed
+                // FAILSAFE FIX: If Drive or CORS blocks the engine, assume it's a transparent PNG 
+                // and give it a white background so it never vanishes against the dark theme.
+                imgElement.style.backgroundColor = "#ffffff";
+                imgElement.style.padding = "5px"; 
+                imgElement.style.borderRadius = "10px";
+                imgElement.style.filter = "none";
             }
         }
 
@@ -834,6 +839,12 @@
                 let cleanFallbackImg = new Image();
                 cleanFallbackImg.onload = function() {
                     hintImg.style.filter = 'none'; 
+                    
+                    // FIX: Ensure transparent PNGs dropping to failsafe NEVER vanish
+                    hintImg.style.backgroundColor = '#ffffff'; 
+                    hintImg.style.padding = '5px';
+                    hintImg.style.borderRadius = '10px';
+                    
                     hintImg.src = this.src;
                     hintImg.style.opacity = '1';
                 };
