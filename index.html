@@ -4,86 +4,112 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>GRE Elite</title>
+    <title>Aplomb Erudition</title>
     <style>
+        /* =========================================
+           THEME VARIABLES ENGINE
+        ========================================= */
         :root {
-            --bg-dark: #09090b; --card-bg: rgba(24, 24, 27, 0.7);
+            --bg-color: #1e1b4b; --bg-dark: #09090b; --card-bg: rgba(24, 24, 27, 0.7);
             --primary: #38bdf8; --secondary: #818cf8;
-            --accent: #f472b6; --success: #10b981;
-            --error: #f43f5e; --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent: #f472b6; --success: #10b981; --error: #f43f5e; 
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --border-light: rgba(255, 255, 255, 0.1); --border-heavy: rgba(255, 255, 255, 0.2);
         }
+
+        body.theme-light {
+            --bg-color: #cbd5e1; --bg-dark: #f8fafc; --card-bg: rgba(255, 255, 255, 0.95);
+            --primary: #0284c7; --secondary: #4f46e5;
+            --text-main: #0f172a; --text-muted: #475569;
+            --border-light: rgba(0, 0, 0, 0.1); --border-heavy: rgba(0, 0, 0, 0.2);
+        }
+
+        body.theme-blue {
+            --bg-color: #0f172a; --bg-dark: #020617; --card-bg: rgba(15, 23, 42, 0.8);
+            --primary: #38bdf8; --secondary: #3b82f6;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+        }
+
+        body.theme-forest {
+            --bg-color: #064e3b; --bg-dark: #022c22; --card-bg: rgba(6, 78, 59, 0.75);
+            --primary: #34d399; --secondary: #10b981;
+            --text-main: #f0fdf4; --text-muted: #a7f3d0;
+        }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: radial-gradient(circle at top center, #1e1b4b, var(--bg-dark));
+            background: radial-gradient(circle at top center, var(--bg-color), var(--bg-dark));
             background-attachment: fixed; color: var(--text-main); margin: 0; padding: 0;
             display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
-            overflow-x: hidden;
+            overflow-x: hidden; transition: background 0.5s ease, color 0.5s ease;
         }
         
-        /* Pseudo-Fullscreen Fallback for Google Sites restriction */
         body.pseudo-fullscreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 99999; margin: 0; padding: 0; overflow: hidden; border-radius: 0; }
-        body.pseudo-fullscreen .app-container { margin-top: 0; max-width: 100%; padding: 10px; height: 100%; display: flex; flex-direction: column;}
+        body.pseudo-fullscreen .app-container { margin-top: 0; max-width: 100%; padding: 10px; height: 100%; display: flex; flex-direction: column; overflow-y: auto;}
         body.pseudo-fullscreen #main-ui { flex-grow: 1; display: flex; flex-direction: column; }
         body.pseudo-fullscreen .quiz-card { flex-grow: 1; }
 
         .app-container { width: 100%; max-width: 1000px; padding: 15px; display: flex; flex-direction: column; gap: 15px; margin-top: env(safe-area-inset-top, 15px); }
         
-        .fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); background: rgba(9, 9, 11, 0.95); }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        .fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .entry-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); padding: 30px 20px; border-radius: 30px; max-width: 450px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 15px; max-height: 90vh; overflow-y: auto;}
-        .app-title { font-size: 2.2rem; font-weight: 900; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .entry-card { background: var(--card-bg); border: 1px solid var(--border-light); padding: 30px 20px 20px 20px; border-radius: 30px; max-width: 450px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 15px; max-height: 90vh; overflow-y: auto;}
+        .app-title { font-size: 2.1rem; font-weight: 900; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .dataset-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 16px 20px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .dataset-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+        .dataset-btn { background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); padding: 16px 20px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
+        .dataset-btn:hover { background: var(--border-heavy); border-color: var(--primary); }
         .dataset-btn:active { transform: scale(0.98); }
         .dataset-status { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; text-align: right; margin-left: 10px;}
         
         .btn-review { background: rgba(244, 63, 94, 0.1); color: var(--error); border: 1px solid rgba(244, 63, 94, 0.3); padding: 16px 20px; border-radius: 16px; font-weight: 800; font-size: 1.1rem; cursor: pointer; width: 100%; margin-top: 10px; display: none; }
         
-        .data-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);}
-        .btn-data { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;}
-        .btn-data:hover { background: rgba(255,255,255,0.05); color: white;}
+        .data-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-light);}
+        .btn-data { background: transparent; border: 1px solid var(--border-heavy); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;}
+        .btn-data:hover { background: var(--border-light); color: var(--text-main);}
 
         #dashboard { display: none; flex-direction: column; gap: 15px; width: 100%; padding-bottom: 30px;}
         .deck-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .deck-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; text-align: center; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden;}
-        .deck-card:hover { border-color: var(--primary); background: rgba(255,255,255,0.06);}
-        .deck-letter { font-size: 1rem; font-weight: 800; color: #fff; text-transform: capitalize;}
+        .deck-card { background: var(--border-light); border: 1px solid var(--border-light); border-radius: 20px; padding: 15px; text-align: center; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden;}
+        .deck-card:hover { border-color: var(--primary); background: var(--border-heavy);}
+        .deck-letter { font-size: 1rem; font-weight: 800; color: var(--text-main); text-transform: capitalize;}
         .deck-info { font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
-        .deck-progress-bar { width: 80%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 5px; }
+        .deck-progress-bar { width: 80%; height: 4px; background: var(--border-light); border-radius: 5px; overflow: hidden; margin-top: 5px; }
         .deck-progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s;}
 
-        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 12px 20px; border-radius: 18px; border: 1px solid var(--border-light); }
         .stat-group { display: flex; gap: 20px; }
         .stat-item { text-align: center; }
         .stat-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 2px;}
         .stat-value { font-size: 1.1rem; color: var(--primary); font-weight: 900; }
-        .btn-exit { background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
+        .btn-exit { background: var(--border-light); color: var(--text-main); border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
         
         #main-ui { display: none; flex-direction: column; gap: 15px; padding-bottom: 30px;}
-        .quiz-card { background: var(--card-bg); border-radius: 25px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 30px rgba(0,0,0,0.4);}
+        .quiz-card { background: var(--card-bg); border-radius: 25px; border: 1px solid var(--border-light); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 30px rgba(0,0,0,0.4); transition: background 0.3s ease;}
         .card-left, .card-right { padding: 20px; }
         .card-left { text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative;}
         
-        #word-display { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 900; margin-bottom: 15px; color: #fff; word-break: break-word; white-space: pre-wrap; line-height: 1.2;}
+        #word-display { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 900; margin-bottom: 15px; color: var(--text-main); word-break: break-word; white-space: pre-wrap; line-height: 1.2;}
         .type-badge { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-size: 0.65rem; padding: 4px 8px; border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.3);}
         
-        #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.3); position: relative; display: flex; align-items: center; justify-content: center;}
-        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; }
+        #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center;}
+        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s, filter 0.3s; display: block; }
         
         .card-right { display: flex; flex-direction: column; gap: 10px; }
-        .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
-        .correct { background: var(--success) !important; color: #fff; font-weight: 700; border-color: var(--success) !important;}
-        .wrong { background: var(--error) !important; color: #fff; opacity: 0.9; border-color: var(--error) !important;}
+        .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
+        .option-btn:hover { background: var(--border-heavy); }
+        .correct { background: var(--success) !important; color: #fff !important; font-weight: 700; border-color: var(--success) !important;}
+        .wrong { background: var(--error) !important; color: #fff !important; opacity: 0.9; border-color: var(--error) !important;}
         
         .swipe-hint { text-align: center; font-size: 0.75rem; color: var(--text-muted); opacity: 0.6; display: flex; justify-content: space-between; padding: 0 10px;}
+        .creator-tag { text-align: center; font-size: 0.65rem; color: var(--text-muted); opacity: 0.4; margin-top: 10px; letter-spacing: 0.5px; font-weight: 500;}
 
         @media (min-width: 800px) {
             .quiz-card { flex-direction: row; min-height: 450px; }
-            .card-left { width: 45%; border-right: 1px solid rgba(255,255,255,0.05); }
+            .card-left { width: 45%; border-right: 1px solid var(--border-light); }
             .card-right { width: 55%; padding-left: 30px; justify-content: center; }
             #hint-box { height: 200px;}
         }
@@ -99,13 +125,13 @@
     <div id="entry-screen" class="fullscreen-overlay" style="display:none; z-index: 150;">
         <div class="entry-card">
             <div>
-                <h1 class="app-title">GRE Elite</h1>
+                <h1 class="app-title">Aplomb Erudition</h1>
                 <p style="color: var(--text-muted); margin: 5px 0 20px 0;">Select your study library.</p>
             </div>
             
-            <div style="margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="margin-bottom: 15px; background: var(--border-light); padding: 12px; border-radius: 15px; border: 1px solid var(--border-light);">
                 <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 8px; letter-spacing: 1px;">IMAGE MODE</label>
-                <select id="image-mode-select" onchange="setImageMode(this.value)" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--bg-dark); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); font-family: inherit; font-size: 0.9rem; cursor: pointer; outline: none;">
+                <select id="image-mode-select" onchange="setImageMode(this.value)" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-light); font-family: inherit; font-size: 0.9rem; cursor: pointer; outline: none;">
                     <option value="sketch">Fixed Sketches (Default)</option>
                     <option value="image">Fixed Images</option>
                     <option value="random">Random Online (Keywords)</option>
@@ -115,11 +141,14 @@
             <div id="dataset-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
             <div class="data-controls">
+                <button class="btn-data" onclick="toggleTheme()">淡 Toggle Theme</button>
                 <button class="btn-data" onclick="exportData()">沈 Save Offline Backup</button>
                 <button class="btn-data" onclick="document.getElementById('file-upload').click()">唐 Load Backup</button>
-                <button class="btn-data" onclick="forceRefreshLibrary()" id="btn-reload" style="display:none;">売 Force Update Dataset</button>
+                <button class="btn-data" onclick="forceRefreshLibrary()" id="btn-reload" style="display:none; background: rgba(56, 189, 248, 0.2); border-color: var(--primary); color: var(--text-main);">売 FORCE UPDATE DATASET</button>
                 <input type="file" id="file-upload" style="display:none" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
             </div>
+            
+            <div class="creator-tag">Created by Arjan Chatterjee</div>
         </div>
     </div>
 
@@ -136,7 +165,7 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <h3 style="color: #fff; margin: 5px 0 0 0; font-weight: 800; font-size: 1.1rem;">Study Decks</h3>
+                <h3 style="color: var(--text-main); margin: 5px 0 0 0; font-weight: 800; font-size: 1.1rem;">Study Decks</h3>
                 <button class="btn-data" style="margin:0;" onclick="showEntryScreen()">Change Library</button>
             </div>
 
@@ -145,6 +174,7 @@
             </button>
 
             <div id="deck-container" class="deck-grid"></div>
+            <div class="creator-tag">Created by Arjan Chatterjee</div>
         </div>
 
         <div id="main-ui">
@@ -185,6 +215,22 @@
         ];
 
         // ==========================================
+        // THEME ENGINE
+        // ==========================================
+        const themes = ['', 'theme-light', 'theme-blue', 'theme-forest'];
+        let currentThemeIndex = 0;
+
+        function toggleTheme() {
+            currentThemeIndex++;
+            if (currentThemeIndex >= themes.length) currentThemeIndex = 0;
+            
+            document.body.className = themes[currentThemeIndex];
+            appData.theme = currentThemeIndex;
+            saveData();
+            enforceFullscreen();
+        }
+
+        // ==========================================
         // 1. STRONG INDEXED-DB PERSISTENCE ENGINE
         // ==========================================
         const DB_NAME = 'GRE_Elite_Database';
@@ -193,7 +239,7 @@
         let dbInstance = null;
         let activeDatasetId = null; 
         
-        let appData = { progress: {}, caches: {}, imageMode: 'sketch' };
+        let appData = { progress: {}, caches: {}, imageMode: 'sketch', theme: 0 };
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -219,13 +265,17 @@
                         appData = request.result;
                         if (!appData.progress) appData.progress = {};
                         if (!appData.caches) appData.caches = {};
-                        if (!appData.imageMode) appData.imageMode = 'sketch'; // Set default
+                        if (!appData.imageMode) appData.imageMode = 'sketch'; 
+                        if (!appData.theme) appData.theme = 0;
                     } else {
-                        // Fallback for completely new users
                         appData.imageMode = 'sketch';
+                        appData.theme = 0;
                     }
                     
-                    // Sync UI with loaded preference
+                    // Apply saved theme
+                    currentThemeIndex = appData.theme;
+                    document.body.className = themes[currentThemeIndex];
+
                     let modeSelect = document.getElementById('image-mode-select');
                     if (modeSelect) modeSelect.value = appData.imageMode;
                 };
@@ -250,7 +300,7 @@
             var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
             var dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "GRE_Master_Backup.json");
+            dlAnchorElem.setAttribute("download", "Aplomb_Erudition_Backup.json");
             dlAnchorElem.click();
         }
 
@@ -366,40 +416,24 @@
         // --- 4. SMART TSV/CSV PARSING ---
         function parseAndChunk(raw) {
             master = []; 
-            let rows = [];
-            let row = [];
-            let current = '';
-            let inQuotes = false;
-            
+            let rows = []; let row = []; let current = ''; let inQuotes = false;
             let delimiter = raw.indexOf('\t') !== -1 ? '\t' : ',';
             
             for (let i = 0; i < raw.length; i++) {
                 let char = raw[i];
                 if (inQuotes) {
                     if (char === '"') {
-                        if (i + 1 < raw.length && raw[i + 1] === '"') {
-                            current += '"'; i++; 
-                        } else {
-                            inQuotes = false;
-                        }
-                    } else {
-                        current += char;
-                    }
+                        if (i + 1 < raw.length && raw[i + 1] === '"') { current += '"'; i++; } else { inQuotes = false; }
+                    } else { current += char; }
                 } else {
-                    if (char === '"') {
-                        inQuotes = true;
-                    } else if (char === delimiter) {
-                        row.push(current.trim());
-                        current = '';
-                    } else if (char === '\n' || char === '\r') {
+                    if (char === '"') { inQuotes = true; } 
+                    else if (char === delimiter) { row.push(current.trim()); current = ''; } 
+                    else if (char === '\n' || char === '\r') {
                         row.push(current.trim());
                         if (row.length > 0 && row[0] !== '') rows.push(row);
-                        row = [];
-                        current = '';
+                        row = []; current = '';
                         if (char === '\r' && i + 1 < raw.length && raw[i + 1] === '\n') i++; 
-                    } else {
-                        current += char;
-                    }
+                    } else { current += char; }
                 }
             }
             if (current !== '' || row.length > 0) {
@@ -408,18 +442,15 @@
             }
 
             for (let i = 0; i < rows.length; i++) { 
-                let word = rows[i][0];
-                let def = rows[i][1];
-                let extra = rows[i][2] || '';  // Column C: Keywords / Idioms
-                let image = rows[i][3] || '';  // Column D: Fixed Images
-                let sketch = rows[i][4] || ''; // Column E: Fixed Sketches
+                let word = rows[i][0]; let def = rows[i][1];
+                let extra = rows[i][2] || ''; let image = rows[i][3] || ''; let sketch = rows[i][4] || ''; 
                 
                 if(word && def) {
                     word = word.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
                     def = def.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
                     extra = extra.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
-                    image = image.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
-                    sketch = sketch.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
+                    image = image.replace(/<[^>]*>?/gm, ' ').replace(/^"|"$/g, '').trim();
+                    sketch = sketch.replace(/<[^>]*>?/gm, ' ').replace(/^"|"$/g, '').trim();
 
                     if (word.length > 1 && def.length > 1 && word.toLowerCase() !== "word" && word.toLowerCase() !== "idiom") {
                         master.push({ word: word, def: def, extra: extra, image: image, sketch: sketch });
@@ -430,7 +461,7 @@
             let dsInfo = DATASETS.find(d => d.id === activeDatasetId);
             document.getElementById('dash-dataset-name').innerText = dsInfo.name.toUpperCase();
             document.getElementById('dash-total').innerText = master.length;
-            master.sort(function(a, b) { return a.word.localeCompare(b.word); });
+            master.sort((a, b) => a.word.localeCompare(b.word));
 
             var minSize = Math.max(10, Math.ceil(master.length * 0.005)); 
             var targetMax = Math.max(60, minSize * 2); 
@@ -489,7 +520,6 @@
             });
         }
 
-        // --- DASHBOARD UI UPDATES & FOCUS MODE TOGGLE ---
         function updateDashStats() {
             if(!activeDatasetId) return;
             let pData = appData.progress[activeDatasetId];
@@ -498,7 +528,6 @@
             document.getElementById('streak').innerText = pData.streak;
             document.getElementById('dash-mastered').innerText = pData.mastered.length;
 
-            // Handle Focus Mode Button Visibility
             let mistakeBtn = document.getElementById('dash-review-mistakes');
             if (pData.mistakes && pData.mistakes.length > 0) {
                 document.getElementById('dash-mistake-count').innerText = pData.mistakes.length;
@@ -508,23 +537,18 @@
             }
         }
 
-        // --- 5. AGGRESSIVE FULLSCREEN & GOOGLE SITES FALLBACK ---
         function enforceFullscreen() {
             var doc = window.document;
             var docEl = doc.documentElement;
             var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
             
+            let themeClass = themes[currentThemeIndex];
+            
             if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
                 if(req) {
-                    req.call(docEl).catch(err => {
-                        document.body.classList.add('pseudo-fullscreen');
-                    });
-                } else {
-                    document.body.classList.add('pseudo-fullscreen');
-                }
-            } else {
-                document.body.classList.remove('pseudo-fullscreen');
-            }
+                    req.call(docEl).catch(err => { document.body.className = themeClass ? themeClass + ' pseudo-fullscreen' : 'pseudo-fullscreen'; });
+                } else { document.body.className = themeClass ? themeClass + ' pseudo-fullscreen' : 'pseudo-fullscreen'; }
+            } else { document.body.className = themeClass; }
         }
 
         document.body.addEventListener('touchstart', enforceFullscreen, { passive: true });
@@ -533,13 +557,11 @@
         // --- 6. NAVIGATION & ENGINE ---
         function enterApp(mode) {
             enforceFullscreen();
-            
             if (mode === 'memory') {
                 let pData = appData.progress[activeDatasetId];
-                activeDeck = master.filter(function(w) { return pData.mistakes.includes(w.word); });
+                activeDeck = master.filter(w => pData.mistakes.includes(w.word));
                 currentMode = 'memory';
                 
-                // Switch from Dashboard to Quiz UI
                 document.getElementById('dashboard').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'flex';
                 historyArray = []; historyIndex = -1;
@@ -552,24 +574,21 @@
             let pData = appData.progress[activeDatasetId];
             currentDeckLabel = decks[index].label;
             currentMode = 'normal';
-            historyArray = []; 
-            historyIndex = -1;
+            historyArray = []; historyIndex = -1;
 
             if (pData.deckStates[currentDeckLabel] && pData.deckStates[currentDeckLabel].length > 0) {
                 activeDeck = [];
-                pData.deckStates[currentDeckLabel].forEach(function(wordStr) {
-                    var found = master.find(function(w) { return w.word === wordStr; });
+                pData.deckStates[currentDeckLabel].forEach(wordStr => {
+                    var found = master.find(w => w.word === wordStr);
                     if (found) activeDeck.push(found);
                 });
-                if(activeDeck.length === 0) activeDeck = decks[index].words.slice().sort(function() { return Math.random() - 0.5; });
+                if(activeDeck.length === 0) activeDeck = decks[index].words.slice().sort(() => Math.random() - 0.5);
             } else {
-                activeDeck = decks[index].words.slice(); 
-                activeDeck.sort(function() { return Math.random() - 0.5; });
+                activeDeck = decks[index].words.slice().sort(() => Math.random() - 0.5);
             }
             
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex';
-            
             generateQuestion();
         }
 
@@ -580,60 +599,50 @@
             if (currentMode === 'normal') {
                 if (canAnswer && currentQuestionTarget) activeDeck.push(currentQuestionTarget);
                 if (activeDeck.length === 0) delete pData.deckStates[currentDeckLabel];
-                else pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
+                else pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
                 saveData();
             }
 
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('dashboard').style.display = 'flex';
-            renderDecks(); 
-            updateDashStats(); // Ensure Focus button updates immediately upon exiting
+            renderDecks(); updateDashStats();
         }
 
-        // --- DYNAMIC CLEANER (SUPPORTS CUSTOM BLANKS) ---
         function clean(text, wordToRemove, blankStyle = "...") {
             if (!text) return "No data.";
-            var c = text.replace(/<[^>]*>?/gm, ' '); 
-            c = c.split(/(?:syn\.|ant\.)/i)[0];
-            
+            var c = text.replace(/<[^>]*>?/gm, ' ').split(/(?:syn\.|ant\.)/i)[0];
             if (wordToRemove) {
                 try {
                     let safeWord = wordToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     c = c.replace(new RegExp(safeWord, 'gi'), blankStyle);
                 } catch(e) {}
             }
-            
             return c.replace(/\s+/g, ' ').trim().replace(/^[;,\-:\.]+|[;,\-:\.]+$/g, "");
         }
 
         function goNext() {
             enforceFullscreen();
             if (historyIndex < historyArray.length - 1) {
-                historyIndex++;
-                displayQuestion(historyArray[historyIndex]);
+                historyIndex++; displayQuestion(historyArray[historyIndex]);
             } else generateQuestion();
         }
 
         function goBack() {
             enforceFullscreen();
             if (historyIndex > 0) {
-                historyIndex--;
-                displayQuestion(historyArray[historyIndex]);
+                historyIndex--; displayQuestion(historyArray[historyIndex]);
             }
         }
 
         function generateQuestion() {
             if (activeDeck.length === 0) {
-                alert("Deck complete!");
-                exitToDashboard();
-                return;
+                alert("Deck complete!"); exitToDashboard(); return;
             }
 
             canAnswer = false; 
             currentQuestionTarget = activeDeck.pop(); 
             
-            let qMode = 0; 
-            let badgeText = "Definition";
+            let qMode = 0; let badgeText = "Definition";
             if (activeDatasetId === 'idioms') {
                 let r = Math.random();
                 if (r < 0.33) { qMode = 1; badgeText = "Find the Idiom"; }
@@ -653,15 +662,12 @@
             }
 
             var options = [{ text: targetOptionText, isCorrect: true }];
-
             let targetLen = targetOptionText.length;
             let distractorPool = [];
             
             for(let i=0; i<40; i++) {
                 let rItem = master[Math.floor(Math.random() * master.length)];
-                if (rItem.word !== currentQuestionTarget.word) {
-                    distractorPool.push(rItem);
-                }
+                if (rItem.word !== currentQuestionTarget.word) distractorPool.push(rItem);
             }
 
             distractorPool.sort((a,b) => {
@@ -673,9 +679,7 @@
             for(let i=0; i<distractorPool.length && options.length < 4; i++) {
                 let rItem = distractorPool[i];
                 let dText = (qMode === 1 || qMode === 2) ? rItem.word : clean(rItem.def, rItem.word, "...");
-                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) {
-                    options.push({ text: dText, isCorrect: false });
-                }
+                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) options.push({ text: dText, isCorrect: false });
             }
 
             let attempts = 0;
@@ -683,102 +687,135 @@
                 attempts++;
                 let rItem = master[Math.floor(Math.random() * master.length)];
                 let dText = (qMode === 1 || qMode === 2) ? rItem.word : clean(rItem.def, rItem.word, "...");
-                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) {
-                    options.push({ text: dText, isCorrect: false });
-                }
+                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) options.push({ text: dText, isCorrect: false });
             }
 
-            while(options.length < 4) {
-                options.push({ text: "None of the above", isCorrect: false });
-            }
-
-            options.sort(function() { return Math.random() - 0.5; });
+            while(options.length < 4) options.push({ text: "None of the above", isCorrect: false });
+            options.sort(() => Math.random() - 0.5);
             
-            var questionObj = { 
-                target: currentQuestionTarget, 
-                wordRef: currentQuestionTarget.word,
-                displayPrompt: displayPrompt, 
-                badgeText: badgeText,
-                options: options 
-            };
-            
-            historyArray.push(questionObj);
-            historyIndex++;
+            var questionObj = { target: currentQuestionTarget, wordRef: currentQuestionTarget.word, displayPrompt: displayPrompt, badgeText: badgeText, options: options };
+            historyArray.push(questionObj); historyIndex++;
             displayQuestion(questionObj);
         }
 
+        // --- Cache Buster and Viewer Link Fix ---
+        function cleanImageLink(url) {
+            if (!url) return '';
+            let cb = new Date().getTime(); // Anti-rate-limiting cache buster
+            if (url.includes('drive.google.com')) {
+                let idMatch = url.match(/[-\w]{25,}/);
+                if (idMatch) return `https://drive.google.com/uc?export=view&id=${idMatch[0]}&cb=${cb}`;
+            }
+            if (url.includes('dropbox.com')) return url.replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com') + `&cb=${cb}`;
+            return url;
+        }
+
+        // --- On-Device AI Brightness Evaluator ---
+        function applySmartContrast(imgElement) {
+            try {
+                let canvas = document.createElement('canvas');
+                canvas.width = imgElement.naturalWidth || imgElement.width;
+                canvas.height = imgElement.naturalHeight || imgElement.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(imgElement, 0, 0);
+                
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imageData.data;
+                let colorSum = 0;
+
+                // Sample pixels for speed
+                for(let x = 0, len = data.length; x < len; x+=16) {
+                    let r = data[x]; let g = data[x+1]; let b = data[x+2];
+                    colorSum += Math.floor((r*299 + g*587 + b*114) / 1000);
+                }
+                
+                let brightness = colorSum / (data.length / 16);
+
+                if(brightness < 50) {
+                    imgElement.style.filter = "brightness(1.8) contrast(1.3)";
+                } else if (brightness < 90) {
+                    imgElement.style.filter = "brightness(1.4) contrast(1.2)";
+                } else {
+                    imgElement.style.filter = "none";
+                }
+            } catch(e) {
+                // If CORS blocks canvas inspection, just display normally
+                imgElement.style.filter = "none";
+            }
+        }
+
         function displayQuestion(qObj) {
-            canAnswer = true;
-            enforceFullscreen(); 
+            canAnswer = true; enforceFullscreen(); 
             
             let badge = document.getElementById('question-type-badge');
-            if (activeDatasetId === 'idioms') {
-                badge.style.display = 'inline-block';
-                badge.innerText = qObj.badgeText;
-            } else {
-                badge.style.display = 'none';
-            }
+            if (activeDatasetId === 'idioms') { badge.style.display = 'inline-block'; badge.innerText = qObj.badgeText; } 
+            else { badge.style.display = 'none'; }
 
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
-            // --- UPDATED IMAGE ENGINE: Fallbacks and Local Storage Mode Routing ---
+            // --- RESILIENT IMAGE ENGINE ---
             var hintImg = document.getElementById('hint-img');
             hintImg.style.opacity = '0'; 
+            hintImg.style.filter = 'none';
 
-            var tempImg = new Image();
-
-            tempImg.onload = function() { 
-                hintImg.src = tempImg.src; 
-                hintImg.style.opacity = '1'; 
-            };
-
-            // Global fallback if an image link is broken or undefined
-            tempImg.onerror = function() {
-                this.onerror = null; 
-                this.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
-            };
-
-            // Determine which source to use based on settings
             let mode = appData.imageMode || 'sketch';
             let targetSrc = '';
 
-            if (mode === 'sketch' && qObj.target.sketch) {
-                targetSrc = qObj.target.sketch;
-            } else if (mode === 'image' && qObj.target.image) {
-                targetSrc = qObj.target.image;
-            } else if (mode === 'random' && qObj.target.extra) {
-                // Treat Column C as keyword string, clean it for a URL search
-                let keyword = qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, ',');
+            if (mode === 'sketch' && qObj.target.sketch && qObj.target.sketch.length > 5) {
+                targetSrc = cleanImageLink(qObj.target.sketch);
+            } else if (mode === 'image' && qObj.target.image && qObj.target.image.length > 5) {
+                targetSrc = cleanImageLink(qObj.target.image);
+            } else if (mode === 'random') {
+                let randomSeed = Math.floor(Math.random() * 100000);
+                let keyword = (qObj.target.extra && qObj.target.extra.length > 2) ? qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
                 if (keyword) {
-                    targetSrc = `https://loremflickr.com/320/240/${keyword}?random=${new Date().getTime()}`;
+                    targetSrc = (Math.random() < 0.5) 
+                        ? `https://loremflickr.com/320/240/${keyword.replace(/\s+/g, ',')}?lock=${randomSeed}`
+                        : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${randomSeed}`;
                 }
             }
 
-            // FALLBACK: If columns are missing or data is empty
-            if (!targetSrc) {
-                let cleanDef = "";
-                if (qObj.target && qObj.target.def) {
-                    cleanDef = qObj.target.def.replace(/[^a-zA-Z ]/g, '').toLowerCase();
-                }
-
+            if (!targetSrc || targetSrc.trim() === '') {
+                let cleanDef = qObj.target && qObj.target.def ? qObj.target.def.replace(/[^a-zA-Z ]/g, '').toLowerCase() : "";
                 let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
-                
-                let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w));
-                defWords.sort((a, b) => b.length - a.length);
-
+                let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w)).sort((a, b) => b.length - a.length);
                 let searchKeyword = defWords.length > 0 ? defWords[0] : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-
-                targetSrc = `https://loremflickr.com/320/240/school,study,${searchKeyword}?random=${new Date().getTime()}`;
+                targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${Math.floor(Math.random() * 100000)}`;
             }
 
-            // Trigger load
-            tempImg.src = targetSrc;
-            
-            // -----------------------------------------------------------
+            // DOUBLE-LOAD ARCHITECTURE
+            var tempImg = new Image();
+            tempImg.crossOrigin = "Anonymous"; // Allows Brightness Engine to work
 
+            tempImg.onload = function() { 
+                applySmartContrast(this);
+                hintImg.style.filter = this.style.filter;
+                hintImg.src = this.src; 
+                hintImg.style.opacity = '1'; 
+            };
+
+            tempImg.onerror = function() {
+                // If CORS blocked it or network dropped, retry without crossOrigin as Failsafe #1
+                let fallbackImg = new Image();
+                fallbackImg.onload = function() {
+                    hintImg.style.filter = 'none'; // Brightness engine disabled for safety
+                    hintImg.src = this.src;
+                    hintImg.style.opacity = '1';
+                };
+                fallbackImg.onerror = function() {
+                    // Total failure, Failsafe #2
+                    hintImg.style.filter = 'none';
+                    hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
+                    hintImg.style.opacity = '1';
+                };
+                fallbackImg.src = targetSrc;
+            };
+
+            tempImg.src = targetSrc;
+
+            // -----------------------------------------------------------
             var list = document.getElementById('options-list');
             list.innerHTML = '';
-            
             let pData = appData.progress[activeDatasetId];
 
             qObj.options.forEach(function(opt) {
@@ -799,9 +836,7 @@
                         var mIndex = pData.mistakes.indexOf(qObj.wordRef);
                         if(mIndex > -1) pData.mistakes.splice(mIndex, 1);
 
-                        if (currentMode === 'normal') {
-                            pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
-                        }
+                        if (currentMode === 'normal') pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
                         setTimeout(goNext, 800);
                     } else {
                         b.classList.add('wrong');
@@ -813,12 +848,12 @@
 
                         if (currentMode === 'normal') {
                             activeDeck.push(qObj.target);
-                            pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
+                            pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
                         }
 
                         var allBtns = document.querySelectorAll('.option-btn');
                         for(var j=0; j<allBtns.length; j++) {
-                            if(allBtns[j].innerText === qObj.options.find(function(o){return o.isCorrect}).text) allBtns[j].classList.add('correct');
+                            if(allBtns[j].innerText === qObj.options.find(o => o.isCorrect).text) allBtns[j].classList.add('correct');
                         }
                     }
                     saveData(); 
@@ -827,7 +862,6 @@
             });
         }
 
-        /* --- Gestures --- */
         var touchstartX = 0, touchendX = 0;
         var touchSurface = document.getElementById('touch-surface');
         
