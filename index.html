@@ -97,7 +97,6 @@
         
         #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center;}
         
-        /* CHANGED: Forced width/height to 100% and object-fit to cover to completely fill box */
         #hint-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s, filter 0.3s, background-color 0.3s; display: block; }
         
         .card-right { display: flex; flex-direction: column; gap: 10px; }
@@ -331,6 +330,7 @@
         var canAnswer = true;
         var currentDeckLabel = "";
         var currentQuestionTarget = null; 
+        var windowRenderId = 0; // Async race condition execution lock
 
         // --- 3. BOOT & DATASET SELECTION ---
         window.onload = async function() {
@@ -714,6 +714,15 @@
             return url; 
         }
 
+        // Helper to generate a consistent seed based strictly on the vocabulary word
+        function getDeterministicSeed(word) {
+            let seed = 0;
+            for(let i = 0; i < word.length; i++) {
+                seed += word.charCodeAt(i);
+            }
+            return seed;
+        }
+
         // --- HIGH-PERFORMANCE ALPHA-AWARE BRIGHTNESS ENGINE ---
         function applySmartContrast(imgElement) {
             try {
@@ -755,12 +764,12 @@
                     imgElement.style.backgroundColor = "#ffffff";
                     imgElement.style.padding = "15px"; 
                     imgElement.style.borderRadius = "10px";
-                    imgElement.style.objectFit = "contain"; // Protect sketch lines from cropping
+                    imgElement.style.objectFit = "contain"; 
                 } else {
                     imgElement.style.backgroundColor = "transparent";
                     imgElement.style.padding = "0";
                     imgElement.style.borderRadius = "0";
-                    imgElement.style.objectFit = "cover"; // Force photo to completely fill box
+                    imgElement.style.objectFit = "cover"; 
                 }
 
                 if(brightness < 60) {
@@ -785,35 +794,35 @@
         function displayQuestion(qObj) {
             canAnswer = true; enforceFullscreen(); 
             
+            // INCREASE RENDER LOCK ID: Prevents old delayed images from overwriting new ones
+            windowRenderId++;
+            let currentExecutionLock = windowRenderId;
+            
             let badge = document.getElementById('question-type-badge');
             if (activeDatasetId === 'idioms') { badge.style.display = 'inline-block'; badge.innerText = qObj.badgeText; } 
             else { badge.style.display = 'none'; }
 
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
-            // --- RESILIENT IMAGE LOADER ---
             var hintImg = document.getElementById('hint-img');
-            hintImg.style.opacity = '0'; 
-            hintImg.style.filter = 'none';
-            hintImg.style.backgroundColor = 'transparent';
-            hintImg.style.padding = '0';
-            hintImg.style.borderRadius = '0';
-            hintImg.style.objectFit = 'cover';
+            hintImg.style.opacity = '0'; // Only fade out. Do not touch padding/cover yet!
 
             let mode = appData.imageMode || 'sketch';
             let targetSrc = '';
+            
+            let deterministicWordSeed = getDeterministicSeed(qObj.wordRef);
 
             if (mode === 'sketch' && qObj.target.sketch && qObj.target.sketch.length > 5) {
                 targetSrc = cleanImageLink(qObj.target.sketch);
             } else if (mode === 'image' && qObj.target.image && qObj.target.image.length > 5) {
                 targetSrc = cleanImageLink(qObj.target.image);
             } else if (mode === 'random') {
-                let randomSeed = Math.floor(Math.random() * 100000);
                 let keyword = (qObj.target.extra && qObj.target.extra.length > 2) ? qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
                 if (keyword) {
-                    targetSrc = (Math.random() < 0.5) 
-                        ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${randomSeed}`
-                        : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${randomSeed}`;
+                    // Seed ensures random images stay permanently assigned to their respective words
+                    targetSrc = (deterministicWordSeed % 2 === 0) 
+                        ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${deterministicWordSeed}`
+                        : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${deterministicWordSeed}`;
                 }
             }
 
@@ -822,16 +831,17 @@
                 let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
                 let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w)).sort((a, b) => b.length - a.length);
                 let searchKeyword = defWords.length > 0 ? defWords[0] : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${Math.floor(Math.random() * 100000)}`;
+                targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
             }
 
             var tempImg = new Image();
             tempImg.crossOrigin = "Anonymous";
 
             tempImg.onload = function() { 
+                if (currentExecutionLock !== windowRenderId) return; // User swiped away, discard!
+                
                 applySmartContrast(this); 
                 
-                // Map the smart styles onto the actual UI image
                 hintImg.style.filter = this.style.filter;
                 hintImg.style.backgroundColor = this.style.backgroundColor || 'transparent';
                 hintImg.style.padding = this.style.padding || '0';
@@ -843,8 +853,12 @@
             };
 
             tempImg.onerror = function() {
+                if (currentExecutionLock !== windowRenderId) return; // User swiped away, discard!
+                
                 let cleanFallbackImg = new Image();
                 cleanFallbackImg.onload = function() {
+                    if (currentExecutionLock !== windowRenderId) return;
+                    
                     hintImg.style.filter = 'none'; 
                     hintImg.style.backgroundColor = '#ffffff'; 
                     hintImg.style.padding = '15px';
@@ -855,8 +869,12 @@
                     hintImg.style.opacity = '1';
                 };
                 cleanFallbackImg.onerror = function() {
+                    if (currentExecutionLock !== windowRenderId) return;
+                    
                     let ultimateFallback = new Image();
                     ultimateFallback.onload = function() {
+                        if (currentExecutionLock !== windowRenderId) return;
+                        
                         hintImg.style.filter = 'none';
                         hintImg.style.backgroundColor = 'transparent';
                         hintImg.style.padding = '0';
@@ -865,13 +883,17 @@
                         hintImg.style.opacity = '1';
                     };
                     ultimateFallback.onerror = function() {
+                        if (currentExecutionLock !== windowRenderId) return;
+                        
                         hintImg.style.filter = 'none';
+                        hintImg.style.backgroundColor = 'transparent';
+                        hintImg.style.padding = '0';
                         hintImg.style.objectFit = 'cover';
                         hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
                         hintImg.style.opacity = '1';
                     };
                     let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + Math.floor(Math.random() * 1000)}/320/240`;
+                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
                 };
                 
                 if(targetSrc.includes('corsproxy.io')) {
