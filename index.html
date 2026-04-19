@@ -700,12 +700,9 @@
             displayQuestion(questionObj);
         }
 
-        // --- Proxy Solution for Strict CDNs ---
+        // --- DIRECT LINK CLEANER (REMOVED PROXY) ---
         function cleanImageLink(url) {
             if (!url) return '';
-            if (url.includes('pexels.com') || url.includes('pixabay.com')) {
-                return 'https://corsproxy.io/?' + encodeURIComponent(url);
-            }
             if (url.includes('drive.google.com')) {
                 let idMatch = url.match(/[-\w]{25,}/);
                 if (idMatch) return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w600`;
@@ -714,7 +711,6 @@
             return url; 
         }
 
-        // Helper to generate a consistent seed based strictly on the vocabulary word
         function getDeterministicSeed(word) {
             let seed = 0;
             for(let i = 0; i < word.length; i++) {
@@ -724,7 +720,7 @@
         }
 
         // --- HIGH-PERFORMANCE ALPHA-AWARE BRIGHTNESS ENGINE ---
-        function applySmartContrast(imgElement) {
+        function applySmartContrast(imgElement, currentMode) {
             try {
                 let canvas = document.createElement('canvas');
                 canvas.width = 64;
@@ -759,7 +755,6 @@
                 
                 let brightness = colorSum / (64 * 64);
 
-                // Dynamically assign object-fit to ensure filling vs non-cropping
                 if (transparentPixels > (64 * 64 * 0.05)) {
                     imgElement.style.backgroundColor = "#ffffff";
                     imgElement.style.padding = "15px"; 
@@ -782,11 +777,19 @@
                     imgElement.style.filter = "none";
                 }
             } catch(e) {
-                // FAILSAFE FIX
-                imgElement.style.backgroundColor = "#ffffff";
-                imgElement.style.padding = "15px"; 
-                imgElement.style.borderRadius = "10px";
-                imgElement.style.objectFit = "contain"; 
+                // FAILSAFE: If the image prevents pixel reading (like native Pixabay/Pexels links),
+                // we safely format it based on the mode selected, without crashing the app.
+                if (currentMode === 'sketch') {
+                    imgElement.style.backgroundColor = "#ffffff";
+                    imgElement.style.padding = "15px"; 
+                    imgElement.style.borderRadius = "10px";
+                    imgElement.style.objectFit = "contain"; 
+                } else {
+                    imgElement.style.backgroundColor = "transparent";
+                    imgElement.style.padding = "0";
+                    imgElement.style.borderRadius = "0";
+                    imgElement.style.objectFit = "cover"; 
+                }
                 imgElement.style.filter = "none";
             }
         }
@@ -794,7 +797,6 @@
         function displayQuestion(qObj) {
             canAnswer = true; enforceFullscreen(); 
             
-            // INCREASE RENDER LOCK ID: Prevents old delayed images from overwriting new ones
             windowRenderId++;
             let currentExecutionLock = windowRenderId;
             
@@ -805,7 +807,7 @@
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
             var hintImg = document.getElementById('hint-img');
-            hintImg.style.opacity = '0'; // Only fade out. Do not touch padding/cover yet!
+            hintImg.style.opacity = '0'; // Only fade out.
 
             let mode = appData.imageMode || 'sketch';
             let targetSrc = '';
@@ -819,7 +821,6 @@
             } else if (mode === 'random') {
                 let keyword = (qObj.target.extra && qObj.target.extra.length > 2) ? qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
                 if (keyword) {
-                    // Seed ensures random images stay permanently assigned to their respective words
                     targetSrc = (deterministicWordSeed % 2 === 0) 
                         ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${deterministicWordSeed}`
                         : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${deterministicWordSeed}`;
@@ -835,14 +836,14 @@
             }
 
             var tempImg = new Image();
-            tempImg.crossOrigin = "Anonymous";
+            // NATIVE LOADING - No Proxy, No CORS restrictions blocking legitimate images!
 
             tempImg.onload = function() { 
-                if (currentExecutionLock !== windowRenderId) return; // User swiped away, discard!
+                if (currentExecutionLock !== windowRenderId) return; 
                 
-                applySmartContrast(this); 
+                applySmartContrast(this, mode); 
                 
-                hintImg.style.filter = this.style.filter;
+                hintImg.style.filter = this.style.filter || 'none';
                 hintImg.style.backgroundColor = this.style.backgroundColor || 'transparent';
                 hintImg.style.padding = this.style.padding || '0';
                 hintImg.style.borderRadius = this.style.borderRadius || '0';
@@ -853,54 +854,31 @@
             };
 
             tempImg.onerror = function() {
-                if (currentExecutionLock !== windowRenderId) return; // User swiped away, discard!
+                if (currentExecutionLock !== windowRenderId) return; 
                 
-                let cleanFallbackImg = new Image();
-                cleanFallbackImg.onload = function() {
+                let ultimateFallback = new Image();
+                ultimateFallback.onload = function() {
                     if (currentExecutionLock !== windowRenderId) return;
                     
-                    hintImg.style.filter = 'none'; 
-                    hintImg.style.backgroundColor = '#ffffff'; 
-                    hintImg.style.padding = '15px';
-                    hintImg.style.borderRadius = '10px';
-                    hintImg.style.objectFit = 'contain';
-                    
+                    hintImg.style.filter = 'none';
+                    hintImg.style.backgroundColor = 'transparent';
+                    hintImg.style.padding = '0';
+                    hintImg.style.objectFit = 'cover';
                     hintImg.src = this.src;
                     hintImg.style.opacity = '1';
                 };
-                cleanFallbackImg.onerror = function() {
+                ultimateFallback.onerror = function() {
                     if (currentExecutionLock !== windowRenderId) return;
                     
-                    let ultimateFallback = new Image();
-                    ultimateFallback.onload = function() {
-                        if (currentExecutionLock !== windowRenderId) return;
-                        
-                        hintImg.style.filter = 'none';
-                        hintImg.style.backgroundColor = 'transparent';
-                        hintImg.style.padding = '0';
-                        hintImg.style.objectFit = 'cover';
-                        hintImg.src = this.src;
-                        hintImg.style.opacity = '1';
-                    };
-                    ultimateFallback.onerror = function() {
-                        if (currentExecutionLock !== windowRenderId) return;
-                        
-                        hintImg.style.filter = 'none';
-                        hintImg.style.backgroundColor = 'transparent';
-                        hintImg.style.padding = '0';
-                        hintImg.style.objectFit = 'cover';
-                        hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
-                        hintImg.style.opacity = '1';
-                    };
-                    let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
+                    hintImg.style.filter = 'none';
+                    hintImg.style.backgroundColor = 'transparent';
+                    hintImg.style.padding = '0';
+                    hintImg.style.objectFit = 'cover';
+                    hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
+                    hintImg.style.opacity = '1';
                 };
-                
-                if(targetSrc.includes('corsproxy.io')) {
-                    cleanFallbackImg.src = decodeURIComponent(targetSrc.split('?')[1]);
-                } else {
-                    cleanFallbackImg.src = targetSrc;
-                }
+                let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
             };
 
             tempImg.src = targetSrc;
