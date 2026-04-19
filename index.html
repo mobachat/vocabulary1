@@ -96,7 +96,7 @@
         .type-badge { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-size: 0.65rem; padding: 4px 8px; border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.3);}
         
         #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center;}
-        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s, filter 0.3s; display: block; }
+        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; display: block; }
         
         .card-right { display: flex; flex-direction: column; gap: 10px; }
         .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
@@ -266,7 +266,7 @@
                         if (!appData.progress) appData.progress = {};
                         if (!appData.caches) appData.caches = {};
                         if (!appData.imageMode) appData.imageMode = 'sketch'; 
-                        if (!appData.theme) appData.theme = 0;
+                        if (appData.theme === undefined) appData.theme = 0;
                     } else {
                         appData.imageMode = 'sketch';
                         appData.theme = 0;
@@ -698,50 +698,12 @@
             displayQuestion(questionObj);
         }
 
-        // --- Cache Buster and Viewer Link Fix ---
+        // --- Pexels & Pixabay Link Handler ---
         function cleanImageLink(url) {
             if (!url) return '';
-            let cb = new Date().getTime(); // Anti-rate-limiting cache buster
-            if (url.includes('drive.google.com')) {
-                let idMatch = url.match(/[-\w]{25,}/);
-                if (idMatch) return `https://drive.google.com/uc?export=view&id=${idMatch[0]}&cb=${cb}`;
-            }
-            if (url.includes('dropbox.com')) return url.replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com') + `&cb=${cb}`;
-            return url;
-        }
-
-        // --- On-Device AI Brightness Evaluator ---
-        function applySmartContrast(imgElement) {
-            try {
-                let canvas = document.createElement('canvas');
-                canvas.width = imgElement.naturalWidth || imgElement.width;
-                canvas.height = imgElement.naturalHeight || imgElement.height;
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(imgElement, 0, 0);
-                
-                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                let data = imageData.data;
-                let colorSum = 0;
-
-                // Sample pixels for speed
-                for(let x = 0, len = data.length; x < len; x+=16) {
-                    let r = data[x]; let g = data[x+1]; let b = data[x+2];
-                    colorSum += Math.floor((r*299 + g*587 + b*114) / 1000);
-                }
-                
-                let brightness = colorSum / (data.length / 16);
-
-                if(brightness < 50) {
-                    imgElement.style.filter = "brightness(1.8) contrast(1.3)";
-                } else if (brightness < 90) {
-                    imgElement.style.filter = "brightness(1.4) contrast(1.2)";
-                } else {
-                    imgElement.style.filter = "none";
-                }
-            } catch(e) {
-                // If CORS blocks canvas inspection, just display normally
-                imgElement.style.filter = "none";
-            }
+            // We NO LONGER attach ?cb cache-busters here. 
+            // Pexels and Pixabay use signed URLs. Adding a cache-buster breaks their signature resulting in a 403 Forbidden dead link.
+            return url; 
         }
 
         function displayQuestion(qObj) {
@@ -753,10 +715,9 @@
 
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
-            // --- RESILIENT IMAGE ENGINE ---
+            // --- CLEAN IMAGE LOADER FOR PIXABAY/PEXELS ---
             var hintImg = document.getElementById('hint-img');
             hintImg.style.opacity = '0'; 
-            hintImg.style.filter = 'none';
 
             let mode = appData.imageMode || 'sketch';
             let targetSrc = '';
@@ -770,7 +731,7 @@
                 let keyword = (qObj.target.extra && qObj.target.extra.length > 2) ? qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
                 if (keyword) {
                     targetSrc = (Math.random() < 0.5) 
-                        ? `https://loremflickr.com/320/240/${keyword.replace(/\s+/g, ',')}?lock=${randomSeed}`
+                        ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${randomSeed}`
                         : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${randomSeed}`;
                 }
             }
@@ -783,34 +744,34 @@
                 targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${Math.floor(Math.random() * 100000)}`;
             }
 
-            // DOUBLE-LOAD ARCHITECTURE
+            // Create Image element WITHOUT crossOrigin. 
+            // Pixabay and Pexels block CORS requests from random domains. 
             var tempImg = new Image();
-            tempImg.crossOrigin = "Anonymous"; // Allows Brightness Engine to work
 
             tempImg.onload = function() { 
-                applySmartContrast(this);
-                hintImg.style.filter = this.style.filter;
                 hintImg.src = this.src; 
                 hintImg.style.opacity = '1'; 
             };
 
             tempImg.onerror = function() {
-                // If CORS blocked it or network dropped, retry without crossOrigin as Failsafe #1
-                let fallbackImg = new Image();
-                fallbackImg.onload = function() {
-                    hintImg.style.filter = 'none'; // Brightness engine disabled for safety
+                // If Pexels/Pixabay rejects the hotlink (often happens on mobile or after rapid swiping)
+                // Fallback to a reliable placeholder rather than a broken book icon
+                let ultimateFallback = new Image();
+                ultimateFallback.onload = function() {
                     hintImg.src = this.src;
                     hintImg.style.opacity = '1';
                 };
-                fallbackImg.onerror = function() {
-                    // Total failure, Failsafe #2
-                    hintImg.style.filter = 'none';
+                ultimateFallback.onerror = function() {
                     hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
                     hintImg.style.opacity = '1';
                 };
-                fallbackImg.src = targetSrc;
+                
+                let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                let randomBackupSeed = fallbackKeyword + Math.floor(Math.random() * 1000);
+                ultimateFallback.src = `https://picsum.photos/seed/${randomBackupSeed}/320/240`;
             };
 
+            // Request the image simply and cleanly
             tempImg.src = targetSrc;
 
             // -----------------------------------------------------------
