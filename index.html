@@ -96,7 +96,7 @@
         .type-badge { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-size: 0.65rem; padding: 4px 8px; border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.3);}
         
         #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center;}
-        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; display: block; }
+        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s, filter 0.3s; display: block; }
         
         .card-right { display: flex; flex-direction: column; gap: 10px; }
         .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
@@ -698,12 +698,50 @@
             displayQuestion(questionObj);
         }
 
-        // --- Pexels & Pixabay Link Handler ---
+        // --- Proxy Solution for Strict CDNs ---
         function cleanImageLink(url) {
             if (!url) return '';
-            // We NO LONGER attach ?cb cache-busters here. 
-            // Pexels and Pixabay use signed URLs. Adding a cache-buster breaks their signature resulting in a 403 Forbidden dead link.
+            
+            // If it's a strict CDN (Pexels, Pixabay), route it through a free CORS proxy
+            // This bypasses their "opaque response" lock and allows the Canvas Brightness Engine to scan the pixels
+            if (url.includes('pexels.com') || url.includes('pixabay.com')) {
+                return 'https://corsproxy.io/?' + encodeURIComponent(url);
+            }
+            
             return url; 
+        }
+
+        // --- On-Device AI Brightness Evaluator ---
+        function applySmartContrast(imgElement) {
+            try {
+                let canvas = document.createElement('canvas');
+                canvas.width = imgElement.naturalWidth || imgElement.width;
+                canvas.height = imgElement.naturalHeight || imgElement.height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(imgElement, 0, 0);
+                
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imageData.data;
+                let colorSum = 0;
+
+                // Sample pixels for speed
+                for(let x = 0, len = data.length; x < len; x+=16) {
+                    let r = data[x]; let g = data[x+1]; let b = data[x+2];
+                    colorSum += Math.floor((r*299 + g*587 + b*114) / 1000);
+                }
+                
+                let brightness = colorSum / (data.length / 16);
+
+                if(brightness < 50) {
+                    imgElement.style.filter = "brightness(1.8) contrast(1.3)";
+                } else if (brightness < 90) {
+                    imgElement.style.filter = "brightness(1.4) contrast(1.2)";
+                } else {
+                    imgElement.style.filter = "none";
+                }
+            } catch(e) {
+                // Ignore silent canvas extraction failures
+            }
         }
 
         function displayQuestion(qObj) {
@@ -715,7 +753,7 @@
 
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
-            // --- CLEAN IMAGE LOADER FOR PIXABAY/PEXELS ---
+            // --- RESILIENT IMAGE LOADER ---
             var hintImg = document.getElementById('hint-img');
             hintImg.style.opacity = '0'; 
 
@@ -744,34 +782,52 @@
                 targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${Math.floor(Math.random() * 100000)}`;
             }
 
-            // Create Image element WITHOUT crossOrigin. 
-            // Pixabay and Pexels block CORS requests from random domains. 
+            // Create Image element WITH crossOrigin. 
+            // Because we are routing strict links through corsproxy.io, this will succeed and allow the canvas scan.
             var tempImg = new Image();
+            tempImg.crossOrigin = "Anonymous";
 
             tempImg.onload = function() { 
+                applySmartContrast(this); // Brightness Engine will now run successfully!
+                hintImg.style.filter = this.style.filter;
                 hintImg.src = this.src; 
                 hintImg.style.opacity = '1'; 
             };
 
             tempImg.onerror = function() {
-                // If Pexels/Pixabay rejects the hotlink (often happens on mobile or after rapid swiping)
-                // Fallback to a reliable placeholder rather than a broken book icon
-                let ultimateFallback = new Image();
-                ultimateFallback.onload = function() {
+                // If proxy is down, network drops, or cors fails, try one last direct clean route without proxy/CORS.
+                let cleanFallbackImg = new Image();
+                cleanFallbackImg.onload = function() {
+                    hintImg.style.filter = 'none'; // Engine disabled for safety
                     hintImg.src = this.src;
                     hintImg.style.opacity = '1';
                 };
-                ultimateFallback.onerror = function() {
-                    hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
-                    hintImg.style.opacity = '1';
+                cleanFallbackImg.onerror = function() {
+                    // Total failure, fallback to reliable Picsum placeholder
+                    let ultimateFallback = new Image();
+                    ultimateFallback.onload = function() {
+                        hintImg.style.filter = 'none';
+                        hintImg.src = this.src;
+                        hintImg.style.opacity = '1';
+                    };
+                    ultimateFallback.onerror = function() {
+                        hintImg.style.filter = 'none';
+                        hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
+                        hintImg.style.opacity = '1';
+                    };
+                    let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + Math.floor(Math.random() * 1000)}/320/240`;
                 };
                 
-                let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                let randomBackupSeed = fallbackKeyword + Math.floor(Math.random() * 1000);
-                ultimateFallback.src = `https://picsum.photos/seed/${randomBackupSeed}/320/240`;
+                // Strip the proxy to see if direct works
+                if(targetSrc.includes('corsproxy.io')) {
+                    cleanFallbackImg.src = decodeURIComponent(targetSrc.split('?')[1]);
+                } else {
+                    cleanFallbackImg.src = targetSrc;
+                }
             };
 
-            // Request the image simply and cleanly
+            // Request the image
             tempImg.src = targetSrc;
 
             // -----------------------------------------------------------
