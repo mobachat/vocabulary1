@@ -235,7 +235,7 @@
         // 1. STRONG INDEXED-DB PERSISTENCE ENGINE
         // ==========================================
         const DB_NAME = 'GRE_Elite_Database';
-        const DB_VERSION = 1;
+        const DB_VERSION = 2; // Incremented for Image Cache
         
         let dbInstance = null;
         let activeDatasetId = null; 
@@ -249,10 +249,31 @@
                 request.onupgradeneeded = (e) => {
                     let db = e.target.result;
                     if (!db.objectStoreNames.contains('app_storage')) db.createObjectStore('app_storage');
+                    if (!db.objectStoreNames.contains('image_cache')) db.createObjectStore('image_cache'); // NEW CACHE STORE
                 };
                 request.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
                 request.onerror = (e) => reject(e);
             });
+        }
+
+        async function getCachedImageBlob(cacheKey) {
+            try {
+                let db = await initDB();
+                return new Promise((resolve) => {
+                    let tx = db.transaction('image_cache', 'readonly');
+                    let request = tx.objectStore('image_cache').get(cacheKey);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => resolve(null);
+                });
+            } catch(e) { return null; }
+        }
+
+        async function setCachedImageBlob(cacheKey, blob) {
+            try {
+                let db = await initDB();
+                let tx = db.transaction('image_cache', 'readwrite');
+                tx.objectStore('image_cache').put(blob, cacheKey);
+            } catch(e) { console.error("Failed to save image to DB", e); }
         }
 
         async function loadData() {
@@ -835,53 +856,80 @@
                 targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
             }
 
-            var tempImg = new Image();
-            // NATIVE LOADING - No Proxy, No CORS restrictions blocking legitimate images!
+            // --- INTERCEPTOR: INDEXED-DB CACHE CHECK ---
+            let cacheKey = qObj.wordRef + "_" + mode;
 
-            tempImg.onload = function() { 
-                if (currentExecutionLock !== windowRenderId) return; 
+            async function processAndLoadImage() {
+                let finalSrc = targetSrc;
                 
-                applySmartContrast(this, mode); 
+                // 1. Check if image is already saved in IndexedDB
+                let cachedBlob = await getCachedImageBlob(cacheKey);
                 
-                hintImg.style.filter = this.style.filter || 'none';
-                hintImg.style.backgroundColor = this.style.backgroundColor || 'transparent';
-                hintImg.style.padding = this.style.padding || '0';
-                hintImg.style.borderRadius = this.style.borderRadius || '0';
-                hintImg.style.objectFit = this.style.objectFit || 'cover';
-                
-                hintImg.src = this.src; 
-                hintImg.style.opacity = '1'; 
-            };
+                if (cachedBlob) {
+                    // Serve instantly from local disk cache
+                    finalSrc = URL.createObjectURL(cachedBlob);
+                } else {
+                    // 2. Fetch from network and save to IndexedDB permanently
+                    try {
+                        let response = await fetch(targetSrc);
+                        if (response.ok) {
+                            let blob = await response.blob();
+                            await setCachedImageBlob(cacheKey, blob);
+                            finalSrc = URL.createObjectURL(blob);
+                        }
+                    } catch(e) {
+                        console.warn("Direct fetch failed (likely CORS), falling back to standard src assignment", e);
+                    }
+                }
 
-            tempImg.onerror = function() {
-                if (currentExecutionLock !== windowRenderId) return; 
-                
-                let ultimateFallback = new Image();
-                ultimateFallback.onload = function() {
-                    if (currentExecutionLock !== windowRenderId) return;
+                var tempImg = new Image();
+                tempImg.crossOrigin = "anonymous"; 
+
+                tempImg.onload = function() { 
+                    if (currentExecutionLock !== windowRenderId) return; 
                     
-                    hintImg.style.filter = 'none';
-                    hintImg.style.backgroundColor = 'transparent';
-                    hintImg.style.padding = '0';
-                    hintImg.style.objectFit = 'cover';
-                    hintImg.src = this.src;
-                    hintImg.style.opacity = '1';
-                };
-                ultimateFallback.onerror = function() {
-                    if (currentExecutionLock !== windowRenderId) return;
+                    applySmartContrast(this, mode); 
                     
-                    hintImg.style.filter = 'none';
-                    hintImg.style.backgroundColor = 'transparent';
-                    hintImg.style.padding = '0';
-                    hintImg.style.objectFit = 'cover';
-                    hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
-                    hintImg.style.opacity = '1';
+                    hintImg.style.filter = this.style.filter || 'none';
+                    hintImg.style.backgroundColor = this.style.backgroundColor || 'transparent';
+                    hintImg.style.padding = this.style.padding || '0';
+                    hintImg.style.borderRadius = this.style.borderRadius || '0';
+                    hintImg.style.objectFit = this.style.objectFit || 'cover';
+                    
+                    hintImg.src = this.src; 
+                    hintImg.style.opacity = '1'; 
                 };
-                let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
-            };
 
-            tempImg.src = targetSrc;
+                tempImg.onerror = function() {
+                    if (currentExecutionLock !== windowRenderId) return; 
+                    
+                    let ultimateFallback = new Image();
+                    ultimateFallback.onload = function() {
+                        if (currentExecutionLock !== windowRenderId) return;
+                        hintImg.style.filter = 'none';
+                        hintImg.style.backgroundColor = 'transparent';
+                        hintImg.style.padding = '0';
+                        hintImg.style.objectFit = 'cover';
+                        hintImg.src = this.src;
+                        hintImg.style.opacity = '1';
+                    };
+                    ultimateFallback.onerror = function() {
+                        if (currentExecutionLock !== windowRenderId) return;
+                        hintImg.style.filter = 'none';
+                        hintImg.style.backgroundColor = 'transparent';
+                        hintImg.style.padding = '0';
+                        hintImg.style.objectFit = 'cover';
+                        hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
+                        hintImg.style.opacity = '1';
+                    };
+                    let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
+                };
+
+                tempImg.src = finalSrc;
+            }
+
+            processAndLoadImage();
 
             // -----------------------------------------------------------
             var list = document.getElementById('options-list');
