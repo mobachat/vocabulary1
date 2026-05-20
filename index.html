@@ -249,7 +249,7 @@
                 request.onupgradeneeded = (e) => {
                     let db = e.target.result;
                     if (!db.objectStoreNames.contains('app_storage')) db.createObjectStore('app_storage');
-                    if (!db.objectStoreNames.contains('image_cache')) db.createObjectStore('image_cache'); // NEW CACHE STORE
+                    if (!db.objectStoreNames.contains('image_cache')) db.createObjectStore('image_cache'); 
                 };
                 request.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
                 request.onerror = (e) => reject(e);
@@ -351,7 +351,8 @@
         var canAnswer = true;
         var currentDeckLabel = "";
         var currentQuestionTarget = null; 
-        var windowRenderId = 0; // Async race condition execution lock
+        var windowRenderId = 0; 
+        var preloadAbortController = null; // New variable to track background tasks
 
         // --- 3. BOOT & DATASET SELECTION ---
         window.onload = async function() {
@@ -436,7 +437,6 @@
                 });
         }
 
-        // --- 4. SMART TSV/CSV PARSING ---
         function parseAndChunk(raw) {
             master = []; 
             let rows = []; let row = []; let current = ''; let inQuotes = false;
@@ -577,6 +577,63 @@
         document.body.addEventListener('touchstart', enforceFullscreen, { passive: true });
         document.body.addEventListener('click', enforceFullscreen, { passive: true });
 
+        // --- BACKGROUND PRELOADER ENGINE ---
+        async function preloadDeckImages(wordsToCache, mode) {
+            if (preloadAbortController) {
+                preloadAbortController.abort(); // Cancel previous if user switches decks rapidly
+            }
+            preloadAbortController = new AbortController();
+            let signal = preloadAbortController.signal;
+
+            let queue = [...wordsToCache]; // Copy array so pop() operations in main UI don't break loop
+
+            for (let i = 0; i < queue.length; i++) {
+                if (signal.aborted) return;
+                
+                let wordObj = queue[i];
+                let cKey = wordObj.word + "_" + mode;
+                
+                let exists = await getCachedImageBlob(cKey);
+                if (!exists) {
+                    let deterministicWordSeed = getDeterministicSeed(wordObj.word);
+                    let tSrc = '';
+                    
+                    if (mode === 'sketch' && wordObj.sketch && wordObj.sketch.length > 5) {
+                        tSrc = cleanImageLink(wordObj.sketch);
+                    } else if (mode === 'image' && wordObj.image && wordObj.image.length > 5) {
+                        tSrc = cleanImageLink(wordObj.image);
+                    } else if (mode === 'random') {
+                        let keyword = (wordObj.extra && wordObj.extra.length > 2) ? wordObj.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : wordObj.word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                        if (keyword) {
+                            tSrc = (deterministicWordSeed % 2 === 0) 
+                                ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${deterministicWordSeed}`
+                                : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${deterministicWordSeed}`;
+                        }
+                    }
+
+                    if (!tSrc || tSrc.trim() === '') {
+                        let cleanDef = wordObj.def ? wordObj.def.replace(/[^a-zA-Z ]/g, '').toLowerCase() : "";
+                        let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
+                        let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w)).sort((a, b) => b.length - a.length);
+                        let searchKeyword = defWords.length > 0 ? defWords[0] : wordObj.word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
+                        tSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
+                    }
+
+                    try {
+                        let response = await fetch(tSrc, { signal });
+                        if (response.ok) {
+                            let blob = await response.blob();
+                            await setCachedImageBlob(cKey, blob);
+                            // STRICT THROTTLE: Wait 1.5 seconds between each background fetch to avoid API rate limits
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                        }
+                    } catch (e) {
+                        if (e.name === 'AbortError') return; // Exit cleanly if aborted
+                    }
+                }
+            }
+        }
+
         // --- 6. NAVIGATION & ENGINE ---
         function enterApp(mode) {
             enforceFullscreen();
@@ -588,6 +645,10 @@
                 document.getElementById('dashboard').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'flex';
                 historyArray = []; historyIndex = -1;
+                
+                // Launch Background Preloader
+                preloadDeckImages(activeDeck, appData.imageMode || 'sketch');
+                
                 generateQuestion();
             }
         }
@@ -612,6 +673,10 @@
             
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex';
+            
+            // Launch Background Preloader
+            preloadDeckImages(activeDeck, appData.imageMode || 'sketch');
+            
             generateQuestion();
         }
 
@@ -619,6 +684,10 @@
             enforceFullscreen();
             let pData = appData.progress[activeDatasetId];
             
+            if (preloadAbortController) {
+                preloadAbortController.abort(); // Stop background fetching immediately when exiting
+            }
+
             if (currentMode === 'normal') {
                 if (canAnswer && currentQuestionTarget) activeDeck.push(currentQuestionTarget);
                 if (activeDeck.length === 0) delete pData.deckStates[currentDeckLabel];
@@ -721,7 +790,7 @@
             displayQuestion(questionObj);
         }
 
-        // --- DIRECT LINK CLEANER (REMOVED PROXY) ---
+        // --- DIRECT LINK CLEANER ---
         function cleanImageLink(url) {
             if (!url) return '';
             if (url.includes('drive.google.com')) {
@@ -798,8 +867,6 @@
                     imgElement.style.filter = "none";
                 }
             } catch(e) {
-                // FAILSAFE: If the image prevents pixel reading (like native Pixabay/Pexels links),
-                // we safely format it based on the mode selected, without crashing the app.
                 if (currentMode === 'sketch') {
                     imgElement.style.backgroundColor = "#ffffff";
                     imgElement.style.padding = "15px"; 
@@ -856,32 +923,10 @@
                 targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
             }
 
-            // --- INTERCEPTOR: INDEXED-DB CACHE CHECK ---
+            // --- DECOUPLED CACHE HANDLER ---
             let cacheKey = qObj.wordRef + "_" + mode;
 
-            async function processAndLoadImage() {
-                let finalSrc = targetSrc;
-                
-                // 1. Check if image is already saved in IndexedDB
-                let cachedBlob = await getCachedImageBlob(cacheKey);
-                
-                if (cachedBlob) {
-                    // Serve instantly from local disk cache
-                    finalSrc = URL.createObjectURL(cachedBlob);
-                } else {
-                    // 2. Fetch from network and save to IndexedDB permanently
-                    try {
-                        let response = await fetch(targetSrc);
-                        if (response.ok) {
-                            let blob = await response.blob();
-                            await setCachedImageBlob(cacheKey, blob);
-                            finalSrc = URL.createObjectURL(blob);
-                        }
-                    } catch(e) {
-                        console.warn("Direct fetch failed (likely CORS), falling back to standard src assignment", e);
-                    }
-                }
-
+            function renderImageFromSrc(finalSrc) {
                 var tempImg = new Image();
                 tempImg.crossOrigin = "anonymous"; 
 
@@ -927,6 +972,27 @@
                 };
 
                 tempImg.src = finalSrc;
+            }
+
+            async function processAndLoadImage() {
+                // 1. Check if image is already saved in IndexedDB
+                let cachedBlob = await getCachedImageBlob(cacheKey);
+                
+                if (cachedBlob) {
+                    // Serve instantly from local disk cache
+                    renderImageFromSrc(URL.createObjectURL(cachedBlob));
+                } else {
+                    // 2. Fetch natively (Fast) and Fire-and-Forget the IDB save (Decoupled, no blocking Await)
+                    fetch(targetSrc).then(response => {
+                        if (response.ok) return response.blob();
+                        throw new Error("Network error");
+                    }).then(blob => {
+                        renderImageFromSrc(URL.createObjectURL(blob)); // Show immediately
+                        setCachedImageBlob(cacheKey, blob); // Save silently in background
+                    }).catch(e => {
+                        renderImageFromSrc(targetSrc); // Fallback if CORS prevents blob fetch
+                    });
+                }
             }
 
             processAndLoadImage();
