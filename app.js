@@ -1,13 +1,16 @@
 // ==========================================
 // IMAGE API CONFIGURATION & ENGINE (KEYLESS PWA)
 // ==========================================
+// ==========================================
+// IMAGE API CONFIGURATION & ENGINE (KEYLESS PWA)
+// ==========================================
 async function fetchContextualImage(wordRef, definition, isRegenerate = false) {
     // 1. Build a waterfall of search queries
     const cleanWords = definition.replace(/[^a-zA-Z\s]/g, '').split(' ').filter(w => w.length > 3);
     const brokenDef = cleanWords.slice(0, 2).join(' '); // Extracts up to 2 significant keywords
     let queries = [wordRef, brokenDef, definition].filter(q => q && q.trim().length > 0);
     
-    // 2. Introduce randomness for the "Tap to Regenerate" feature to prevent loop-locking
+    // 2. Introduce randomness for the "Tap to Regenerate" feature
     if (isRegenerate) {
         queries = queries.sort(() => Math.random() - 0.5);
     }
@@ -15,21 +18,26 @@ async function fetchContextualImage(wordRef, definition, isRegenerate = false) {
     for (let query of queries) {
         let encoded = encodeURIComponent(query);
 
-        // API: Wikimedia Commons (Keyless, CORS Enabled, Inherently Moderated/Child-Safe)
         try {
             let res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&titles=${encoded}&pithumbsize=400`);
             let data = await res.json();
             let pages = data.query.pages;
             let pageId = Object.keys(pages)[0];
             
-            // Return the image if Wikipedia has a valid thumbnail for the query
             if (pageId !== "-1" && pages[pageId].thumbnail) {
-                return pages[pageId].thumbnail.source;
+                let imgUrl = pages[pageId].thumbnail.source;
+                
+                // VALIDATION: Reject Wikipedia's generic SVG icons, disambiguation graphics, and UI placeholders
+                let lowerUrl = imgUrl.toLowerCase();
+                if (!lowerUrl.includes('.svg') && !lowerUrl.includes('ambox') && !lowerUrl.includes('wiktionary') && !lowerUrl.includes('disambig')) {
+                    return imgUrl;
+                }
             }
         } catch (e) { 
             console.warn(`Wikimedia fetch failed for query: ${query}`, e); 
         }
     }
+
 
     // Final Fallback: Picsum Word Seed (Always generates an abstract but consistent image)
     let safeWordSeed = isRegenerate 
