@@ -4,113 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Aplomb Erudition</title>
+    <title>GRE Elite</title>
     <style>
-        /* =========================================
-           THEME VARIABLES ENGINE
-        ========================================= */
         :root {
-            --bg-color: #1e1b4b; --bg-dark: #09090b; --card-bg: rgba(24, 24, 27, 0.7);
+            --bg-dark: #09090b; --card-bg: rgba(24, 24, 27, 0.7);
             --primary: #38bdf8; --secondary: #818cf8;
-            --accent: #f472b6; --success: #10b981; --error: #f43f5e; 
-            --text-main: #f8fafc; --text-muted: #94a3b8;
-            --border-light: rgba(255, 255, 255, 0.1); --border-heavy: rgba(255, 255, 255, 0.2);
+            --accent: #f472b6; --success: #10b981;
+            --error: #f43f5e; --text-main: #f8fafc; --text-muted: #94a3b8;
         }
-
-        body.theme-light {
-            --bg-color: #cbd5e1; --bg-dark: #f8fafc; --card-bg: rgba(255, 255, 255, 0.95);
-            --primary: #0284c7; --secondary: #4f46e5;
-            --text-main: #0f172a; --text-muted: #475569;
-            --border-light: rgba(0, 0, 0, 0.1); --border-heavy: rgba(0, 0, 0, 0.2);
-        }
-
-        body.theme-blue {
-            --bg-color: #0f172a; --bg-dark: #020617; --card-bg: rgba(15, 23, 42, 0.8);
-            --primary: #38bdf8; --secondary: #3b82f6;
-            --text-main: #f8fafc; --text-muted: #94a3b8;
-        }
-
-        body.theme-forest {
-            --bg-color: #064e3b; --bg-dark: #022c22; --card-bg: rgba(6, 78, 59, 0.75);
-            --primary: #34d399; --secondary: #10b981;
-            --text-main: #f0fdf4; --text-muted: #a7f3d0;
-        }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background: radial-gradient(circle at top center, var(--bg-color), var(--bg-dark));
+            background: radial-gradient(circle at top center, #1e1b4b, var(--bg-dark));
             background-attachment: fixed; color: var(--text-main); margin: 0; padding: 0;
             display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
-            overflow-x: hidden; transition: background 0.5s ease, color 0.5s ease;
+            overflow-x: hidden;
         }
         
+        /* Pseudo-Fullscreen Fallback for Google Sites restriction */
         body.pseudo-fullscreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 99999; margin: 0; padding: 0; overflow: hidden; border-radius: 0; }
-        body.pseudo-fullscreen .app-container { margin-top: 0; max-width: 100%; padding: 10px; height: 100%; display: flex; flex-direction: column; overflow-y: auto;}
+        body.pseudo-fullscreen .app-container { margin-top: 0; max-width: 100%; padding: 10px; height: 100%; display: flex; flex-direction: column;}
         body.pseudo-fullscreen #main-ui { flex-grow: 1; display: flex; flex-direction: column; }
         body.pseudo-fullscreen .quiz-card { flex-grow: 1; }
 
         .app-container { width: 100%; max-width: 1000px; padding: 15px; display: flex; flex-direction: column; gap: 15px; margin-top: env(safe-area-inset-top, 15px); }
         
-        .fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        .fullscreen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; backdrop-filter: blur(10px); background: rgba(9, 9, 11, 0.95); }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        .entry-card { background: var(--card-bg); border: 1px solid var(--border-light); padding: 30px 20px 20px 20px; border-radius: 30px; max-width: 450px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 15px; max-height: 90vh; overflow-y: auto;}
-        .app-title { font-size: 2.1rem; font-weight: 900; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .entry-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); padding: 30px 20px; border-radius: 30px; max-width: 450px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; gap: 15px; max-height: 90vh; overflow-y: auto;}
+        .app-title { font-size: 2.2rem; font-weight: 900; margin: 0; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .dataset-btn { background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); padding: 16px 20px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
-        .dataset-btn:hover { background: var(--border-heavy); border-color: var(--primary); }
+        .dataset-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 16px 20px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center;}
+        .dataset-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
         .dataset-btn:active { transform: scale(0.98); }
         .dataset-status { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; text-align: right; margin-left: 10px;}
         
         .btn-review { background: rgba(244, 63, 94, 0.1); color: var(--error); border: 1px solid rgba(244, 63, 94, 0.3); padding: 16px 20px; border-radius: 16px; font-weight: 800; font-size: 1.1rem; cursor: pointer; width: 100%; margin-top: 10px; display: none; }
         
-        .data-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-light);}
-        .btn-data { background: transparent; border: 1px solid var(--border-heavy); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;}
-        .btn-data:hover { background: var(--border-light); color: var(--text-main);}
+        .data-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);}
+        .btn-data { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); padding: 8px 10px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;}
+        .btn-data:hover { background: rgba(255,255,255,0.05); color: white;}
 
         #dashboard { display: none; flex-direction: column; gap: 15px; width: 100%; padding-bottom: 30px;}
         .deck-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .deck-card { background: var(--border-light); border: 1px solid var(--border-light); border-radius: 20px; padding: 15px; text-align: center; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden;}
-        .deck-card:hover { border-color: var(--primary); background: var(--border-heavy);}
-        .deck-letter { font-size: 1rem; font-weight: 800; color: var(--text-main); text-transform: capitalize;}
+        .deck-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; text-align: center; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; position: relative; overflow: hidden;}
+        .deck-card:hover { border-color: var(--primary); background: rgba(255,255,255,0.06);}
+        .deck-letter { font-size: 1rem; font-weight: 800; color: #fff; text-transform: capitalize;}
         .deck-info { font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
-        .deck-progress-bar { width: 80%; height: 4px; background: var(--border-light); border-radius: 5px; overflow: hidden; margin-top: 5px; }
+        .deck-progress-bar { width: 80%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 5px; }
         .deck-progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s;}
 
-        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 12px 20px; border-radius: 18px; border: 1px solid var(--border-light); }
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 12px 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
         .stat-group { display: flex; gap: 20px; }
         .stat-item { text-align: center; }
         .stat-label { font-size: 0.6rem; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 2px;}
         .stat-value { font-size: 1.1rem; color: var(--primary); font-weight: 900; }
-        .btn-exit { background: var(--border-light); color: var(--text-main); border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
+        .btn-exit { background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
         
         #main-ui { display: none; flex-direction: column; gap: 15px; padding-bottom: 30px;}
-        .quiz-card { background: var(--card-bg); border-radius: 25px; border: 1px solid var(--border-light); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 30px rgba(0,0,0,0.4); transition: background 0.3s ease;}
+        .quiz-card { background: var(--card-bg); border-radius: 25px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 15px 30px rgba(0,0,0,0.4);}
         .card-left, .card-right { padding: 20px; }
         .card-left { text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative;}
         
-        #word-display { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 900; margin-bottom: 15px; color: var(--text-main); word-break: break-word; white-space: pre-wrap; line-height: 1.2;}
+        #word-display { font-size: clamp(1.4rem, 5vw, 2.8rem); font-weight: 900; margin-bottom: 15px; color: #fff; word-break: break-word; white-space: pre-wrap; line-height: 1.2;}
         .type-badge { background: rgba(56, 189, 248, 0.1); color: var(--primary); font-size: 0.65rem; padding: 4px 8px; border-radius: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 10px; border: 1px solid rgba(56, 189, 248, 0.3);}
         
-        #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.2); position: relative; display: flex; align-items: center; justify-content: center;}
-        
-        #hint-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s, filter 0.3s, background-color 0.3s; display: block; }
+        #hint-box { width: 100%; height: 140px; border-radius: 15px; overflow: hidden; display: block; margin-bottom: 10px; background: rgba(0,0,0,0.3); position: relative; display: flex; align-items: center; justify-content: center;}
+        #hint-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; }
         
         .card-right { display: flex; flex-direction: column; gap: 10px; }
-        .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: var(--border-light); border: 1px solid var(--border-light); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
-        .option-btn:hover { background: var(--border-heavy); }
-        .correct { background: var(--success) !important; color: #fff !important; font-weight: 700; border-color: var(--success) !important;}
-        .wrong { background: var(--error) !important; color: #fff !important; opacity: 0.9; border-color: var(--error) !important;}
+        .option-btn { width: 100%; padding: 15px 18px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.95rem; text-align: left; cursor: pointer; transition: 0.2s; line-height: 1.4;}
+        .correct { background: var(--success) !important; color: #fff; font-weight: 700; border-color: var(--success) !important;}
+        .wrong { background: var(--error) !important; color: #fff; opacity: 0.9; border-color: var(--error) !important;}
         
         .swipe-hint { text-align: center; font-size: 0.75rem; color: var(--text-muted); opacity: 0.6; display: flex; justify-content: space-between; padding: 0 10px;}
-        .creator-tag { text-align: center; font-size: 0.65rem; color: var(--text-muted); opacity: 0.4; margin-top: 10px; letter-spacing: 0.5px; font-weight: 500;}
 
         @media (min-width: 800px) {
             .quiz-card { flex-direction: row; min-height: 450px; }
-            .card-left { width: 45%; border-right: 1px solid var(--border-light); }
+            .card-left { width: 45%; border-right: 1px solid rgba(255,255,255,0.05); }
             .card-right { width: 55%; padding-left: 30px; justify-content: center; }
             #hint-box { height: 200px;}
         }
@@ -126,30 +99,18 @@
     <div id="entry-screen" class="fullscreen-overlay" style="display:none; z-index: 150;">
         <div class="entry-card">
             <div>
-                <h1 class="app-title">Aplomb Erudition</h1>
+                <h1 class="app-title">GRE Elite</h1>
                 <p style="color: var(--text-muted); margin: 5px 0 20px 0;">Select your study library.</p>
-            </div>
-            
-            <div style="margin-bottom: 15px; background: var(--border-light); padding: 12px; border-radius: 15px; border: 1px solid var(--border-light);">
-                <label style="color: var(--text-muted); font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 8px; letter-spacing: 1px;">IMAGE MODE</label>
-                <select id="image-mode-select" onchange="setImageMode(this.value)" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-light); font-family: inherit; font-size: 0.9rem; cursor: pointer; outline: none;">
-                    <option value="sketch">Fixed Sketches (Default)</option>
-                    <option value="image">Fixed Images</option>
-                    <option value="random">Random Online (Keywords)</option>
-                </select>
             </div>
             
             <div id="dataset-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
             <div class="data-controls">
-                <button class="btn-data" onclick="toggleTheme()">淡 Toggle Theme</button>
                 <button class="btn-data" onclick="exportData()">沈 Save Offline Backup</button>
                 <button class="btn-data" onclick="document.getElementById('file-upload').click()">唐 Load Backup</button>
-                <button class="btn-data" onclick="forceRefreshLibrary()" id="btn-reload" style="display:none; background: rgba(56, 189, 248, 0.2); border-color: var(--primary); color: var(--text-main);">売 FORCE UPDATE DATASET</button>
+                <button class="btn-data" onclick="forceRefreshLibrary()" id="btn-reload" style="display:none;">売 Force Update Dataset</button>
                 <input type="file" id="file-upload" style="display:none" accept=".json,application/json,text/plain,*/*" onchange="importData(event)">
             </div>
-            
-            <div class="creator-tag">Created by Arjan Chatterjee</div>
         </div>
     </div>
 
@@ -166,7 +127,7 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <h3 style="color: var(--text-main); margin: 5px 0 0 0; font-weight: 800; font-size: 1.1rem;">Study Decks</h3>
+                <h3 style="color: #fff; margin: 5px 0 0 0; font-weight: 800; font-size: 1.1rem;">Study Decks</h3>
                 <button class="btn-data" style="margin:0;" onclick="showEntryScreen()">Change Library</button>
             </div>
 
@@ -175,7 +136,6 @@
             </button>
 
             <div id="deck-container" class="deck-grid"></div>
-            <div class="creator-tag">Created by Arjan Chatterjee</div>
         </div>
 
         <div id="main-ui">
@@ -205,7 +165,7 @@
 
     <script>
         // ==========================================
-        // CONFIGURATION
+        // CONFIGURATION: EXACT MATCH TO YOUR UPLOADS
         // ==========================================
         const DATASETS = [
             { id: 'barron800', name: 'Barron\'s 800', file: 'barron800.csv' },
@@ -216,31 +176,15 @@
         ];
 
         // ==========================================
-        // THEME ENGINE
-        // ==========================================
-        const themes = ['', 'theme-light', 'theme-blue', 'theme-forest'];
-        let currentThemeIndex = 0;
-
-        function toggleTheme() {
-            currentThemeIndex++;
-            if (currentThemeIndex >= themes.length) currentThemeIndex = 0;
-            
-            document.body.className = themes[currentThemeIndex];
-            appData.theme = currentThemeIndex;
-            saveData();
-            enforceFullscreen();
-        }
-
-        // ==========================================
         // 1. STRONG INDEXED-DB PERSISTENCE ENGINE
         // ==========================================
         const DB_NAME = 'GRE_Elite_Database';
-        const DB_VERSION = 2; // Incremented for Image Cache
+        const DB_VERSION = 1;
         
         let dbInstance = null;
         let activeDatasetId = null; 
         
-        let appData = { progress: {}, caches: {}, imageMode: 'sketch', theme: 0 };
+        let appData = { progress: {}, caches: {} };
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -249,31 +193,10 @@
                 request.onupgradeneeded = (e) => {
                     let db = e.target.result;
                     if (!db.objectStoreNames.contains('app_storage')) db.createObjectStore('app_storage');
-                    if (!db.objectStoreNames.contains('image_cache')) db.createObjectStore('image_cache'); 
                 };
                 request.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
                 request.onerror = (e) => reject(e);
             });
-        }
-
-        async function getCachedImageBlob(cacheKey) {
-            try {
-                let db = await initDB();
-                return new Promise((resolve) => {
-                    let tx = db.transaction('image_cache', 'readonly');
-                    let request = tx.objectStore('image_cache').get(cacheKey);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => resolve(null);
-                });
-            } catch(e) { return null; }
-        }
-
-        async function setCachedImageBlob(cacheKey, blob) {
-            try {
-                let db = await initDB();
-                let tx = db.transaction('image_cache', 'readwrite');
-                tx.objectStore('image_cache').put(blob, cacheKey);
-            } catch(e) { console.error("Failed to save image to DB", e); }
         }
 
         async function loadData() {
@@ -287,19 +210,7 @@
                         appData = request.result;
                         if (!appData.progress) appData.progress = {};
                         if (!appData.caches) appData.caches = {};
-                        if (!appData.imageMode) appData.imageMode = 'sketch'; 
-                        if (appData.theme === undefined) appData.theme = 0;
-                    } else {
-                        appData.imageMode = 'sketch';
-                        appData.theme = 0;
                     }
-                    
-                    // Apply saved theme
-                    currentThemeIndex = appData.theme;
-                    document.body.className = themes[currentThemeIndex];
-
-                    let modeSelect = document.getElementById('image-mode-select');
-                    if (modeSelect) modeSelect.value = appData.imageMode;
                 };
             } catch (e) { console.error("IDB Load Error:", e); }
         }
@@ -313,16 +224,11 @@
             } catch (e) { console.error("IDB Save Error:", e); }
         }
 
-        function setImageMode(mode) {
-            appData.imageMode = mode;
-            saveData();
-        }
-
         function exportData() {
             var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
             var dlAnchorElem = document.createElement('a');
             dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", "Aplomb_Erudition_Backup.json");
+            dlAnchorElem.setAttribute("download", "GRE_Master_Backup.json");
             dlAnchorElem.click();
         }
 
@@ -351,8 +257,6 @@
         var canAnswer = true;
         var currentDeckLabel = "";
         var currentQuestionTarget = null; 
-        var windowRenderId = 0; 
-        var preloadAbortController = null; // New variable to track background tasks
 
         // --- 3. BOOT & DATASET SELECTION ---
         window.onload = async function() {
@@ -437,26 +341,43 @@
                 });
         }
 
+        // --- 4. SMART TSV/CSV PARSING ---
         function parseAndChunk(raw) {
             master = []; 
-            let rows = []; let row = []; let current = ''; let inQuotes = false;
+            let rows = [];
+            let row = [];
+            let current = '';
+            let inQuotes = false;
+            
             let delimiter = raw.indexOf('\t') !== -1 ? '\t' : ',';
             
             for (let i = 0; i < raw.length; i++) {
                 let char = raw[i];
                 if (inQuotes) {
                     if (char === '"') {
-                        if (i + 1 < raw.length && raw[i + 1] === '"') { current += '"'; i++; } else { inQuotes = false; }
-                    } else { current += char; }
+                        if (i + 1 < raw.length && raw[i + 1] === '"') {
+                            current += '"'; i++; 
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        current += char;
+                    }
                 } else {
-                    if (char === '"') { inQuotes = true; } 
-                    else if (char === delimiter) { row.push(current.trim()); current = ''; } 
-                    else if (char === '\n' || char === '\r') {
+                    if (char === '"') {
+                        inQuotes = true;
+                    } else if (char === delimiter) {
+                        row.push(current.trim());
+                        current = '';
+                    } else if (char === '\n' || char === '\r') {
                         row.push(current.trim());
                         if (row.length > 0 && row[0] !== '') rows.push(row);
-                        row = []; current = '';
+                        row = [];
+                        current = '';
                         if (char === '\r' && i + 1 < raw.length && raw[i + 1] === '\n') i++; 
-                    } else { current += char; }
+                    } else {
+                        current += char;
+                    }
                 }
             }
             if (current !== '' || row.length > 0) {
@@ -465,18 +386,17 @@
             }
 
             for (let i = 0; i < rows.length; i++) { 
-                let word = rows[i][0]; let def = rows[i][1];
-                let extra = rows[i][2] || ''; let image = rows[i][3] || ''; let sketch = rows[i][4] || ''; 
+                let word = rows[i][0];
+                let def = rows[i][1];
+                let extra = rows[i][2] || '';
                 
                 if(word && def) {
                     word = word.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
                     def = def.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
                     extra = extra.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
-                    image = image.replace(/<[^>]*>?/gm, ' ').replace(/^"|"$/g, '').trim();
-                    sketch = sketch.replace(/<[^>]*>?/gm, ' ').replace(/^"|"$/g, '').trim();
 
                     if (word.length > 1 && def.length > 1 && word.toLowerCase() !== "word" && word.toLowerCase() !== "idiom") {
-                        master.push({ word: word, def: def, extra: extra, image: image, sketch: sketch });
+                        master.push({ word: word, def: def, extra: extra });
                     }
                 }
             }
@@ -484,7 +404,7 @@
             let dsInfo = DATASETS.find(d => d.id === activeDatasetId);
             document.getElementById('dash-dataset-name').innerText = dsInfo.name.toUpperCase();
             document.getElementById('dash-total').innerText = master.length;
-            master.sort((a, b) => a.word.localeCompare(b.word));
+            master.sort(function(a, b) { return a.word.localeCompare(b.word); });
 
             var minSize = Math.max(10, Math.ceil(master.length * 0.005)); 
             var targetMax = Math.max(60, minSize * 2); 
@@ -543,6 +463,7 @@
             });
         }
 
+        // --- DASHBOARD UI UPDATES & FOCUS MODE TOGGLE ---
         function updateDashStats() {
             if(!activeDatasetId) return;
             let pData = appData.progress[activeDatasetId];
@@ -551,6 +472,7 @@
             document.getElementById('streak').innerText = pData.streak;
             document.getElementById('dash-mastered').innerText = pData.mastered.length;
 
+            // Handle Focus Mode Button Visibility
             let mistakeBtn = document.getElementById('dash-review-mistakes');
             if (pData.mistakes && pData.mistakes.length > 0) {
                 document.getElementById('dash-mistake-count').innerText = pData.mistakes.length;
@@ -560,95 +482,41 @@
             }
         }
 
+        // --- 5. AGGRESSIVE FULLSCREEN & GOOGLE SITES FALLBACK ---
         function enforceFullscreen() {
             var doc = window.document;
             var docEl = doc.documentElement;
             var req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
             
-            let themeClass = themes[currentThemeIndex];
-            
             if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
                 if(req) {
-                    req.call(docEl).catch(err => { document.body.className = themeClass ? themeClass + ' pseudo-fullscreen' : 'pseudo-fullscreen'; });
-                } else { document.body.className = themeClass ? themeClass + ' pseudo-fullscreen' : 'pseudo-fullscreen'; }
-            } else { document.body.className = themeClass; }
+                    req.call(docEl).catch(err => {
+                        document.body.classList.add('pseudo-fullscreen');
+                    });
+                } else {
+                    document.body.classList.add('pseudo-fullscreen');
+                }
+            } else {
+                document.body.classList.remove('pseudo-fullscreen');
+            }
         }
 
         document.body.addEventListener('touchstart', enforceFullscreen, { passive: true });
         document.body.addEventListener('click', enforceFullscreen, { passive: true });
 
-        // --- BACKGROUND PRELOADER ENGINE ---
-        async function preloadDeckImages(wordsToCache, mode) {
-            if (preloadAbortController) {
-                preloadAbortController.abort(); // Cancel previous if user switches decks rapidly
-            }
-            preloadAbortController = new AbortController();
-            let signal = preloadAbortController.signal;
-
-            let queue = [...wordsToCache]; // Copy array so pop() operations in main UI don't break loop
-
-            for (let i = 0; i < queue.length; i++) {
-                if (signal.aborted) return;
-                
-                let wordObj = queue[i];
-                let cKey = wordObj.word + "_" + mode;
-                
-                let exists = await getCachedImageBlob(cKey);
-                if (!exists) {
-                    let deterministicWordSeed = getDeterministicSeed(wordObj.word);
-                    let tSrc = '';
-                    
-                    if (mode === 'sketch' && wordObj.sketch && wordObj.sketch.length > 5) {
-                        tSrc = cleanImageLink(wordObj.sketch);
-                    } else if (mode === 'image' && wordObj.image && wordObj.image.length > 5) {
-                        tSrc = cleanImageLink(wordObj.image);
-                    } else if (mode === 'random') {
-                        let keyword = (wordObj.extra && wordObj.extra.length > 2) ? wordObj.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : wordObj.word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                        if (keyword) {
-                            tSrc = (deterministicWordSeed % 2 === 0) 
-                                ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${deterministicWordSeed}`
-                                : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${deterministicWordSeed}`;
-                        }
-                    }
-
-                    if (!tSrc || tSrc.trim() === '') {
-                        let cleanDef = wordObj.def ? wordObj.def.replace(/[^a-zA-Z ]/g, '').toLowerCase() : "";
-                        let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
-                        let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w)).sort((a, b) => b.length - a.length);
-                        let searchKeyword = defWords.length > 0 ? defWords[0] : wordObj.word.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                        tSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
-                    }
-
-                    try {
-                        let response = await fetch(tSrc, { signal });
-                        if (response.ok) {
-                            let blob = await response.blob();
-                            await setCachedImageBlob(cKey, blob);
-                            // STRICT THROTTLE: Wait 1.5 seconds between each background fetch to avoid API rate limits
-                            await new Promise(resolve => setTimeout(resolve, 1500));
-                        }
-                    } catch (e) {
-                        if (e.name === 'AbortError') return; // Exit cleanly if aborted
-                    }
-                }
-            }
-        }
-
         // --- 6. NAVIGATION & ENGINE ---
         function enterApp(mode) {
             enforceFullscreen();
+            
             if (mode === 'memory') {
                 let pData = appData.progress[activeDatasetId];
-                activeDeck = master.filter(w => pData.mistakes.includes(w.word));
+                activeDeck = master.filter(function(w) { return pData.mistakes.includes(w.word); });
                 currentMode = 'memory';
                 
+                // Switch from Dashboard to Quiz UI
                 document.getElementById('dashboard').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'flex';
                 historyArray = []; historyIndex = -1;
-                
-                // Launch Background Preloader
-                preloadDeckImages(activeDeck, appData.imageMode || 'sketch');
-                
                 generateQuestion();
             }
         }
@@ -658,24 +526,23 @@
             let pData = appData.progress[activeDatasetId];
             currentDeckLabel = decks[index].label;
             currentMode = 'normal';
-            historyArray = []; historyIndex = -1;
+            historyArray = []; 
+            historyIndex = -1;
 
             if (pData.deckStates[currentDeckLabel] && pData.deckStates[currentDeckLabel].length > 0) {
                 activeDeck = [];
-                pData.deckStates[currentDeckLabel].forEach(wordStr => {
-                    var found = master.find(w => w.word === wordStr);
+                pData.deckStates[currentDeckLabel].forEach(function(wordStr) {
+                    var found = master.find(function(w) { return w.word === wordStr; });
                     if (found) activeDeck.push(found);
                 });
-                if(activeDeck.length === 0) activeDeck = decks[index].words.slice().sort(() => Math.random() - 0.5);
+                if(activeDeck.length === 0) activeDeck = decks[index].words.slice().sort(function() { return Math.random() - 0.5; });
             } else {
-                activeDeck = decks[index].words.slice().sort(() => Math.random() - 0.5);
+                activeDeck = decks[index].words.slice(); 
+                activeDeck.sort(function() { return Math.random() - 0.5; });
             }
             
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('main-ui').style.display = 'flex';
-            
-            // Launch Background Preloader
-            preloadDeckImages(activeDeck, appData.imageMode || 'sketch');
             
             generateQuestion();
         }
@@ -684,57 +551,63 @@
             enforceFullscreen();
             let pData = appData.progress[activeDatasetId];
             
-            if (preloadAbortController) {
-                preloadAbortController.abort(); // Stop background fetching immediately when exiting
-            }
-
             if (currentMode === 'normal') {
                 if (canAnswer && currentQuestionTarget) activeDeck.push(currentQuestionTarget);
                 if (activeDeck.length === 0) delete pData.deckStates[currentDeckLabel];
-                else pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
+                else pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
                 saveData();
             }
 
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('dashboard').style.display = 'flex';
-            renderDecks(); updateDashStats();
+            renderDecks(); 
+            updateDashStats(); // Ensure Focus button updates immediately upon exiting
         }
 
+        // --- DYNAMIC CLEANER (SUPPORTS CUSTOM BLANKS) ---
         function clean(text, wordToRemove, blankStyle = "...") {
             if (!text) return "No data.";
-            var c = text.replace(/<[^>]*>?/gm, ' ').split(/(?:syn\.|ant\.)/i)[0];
+            var c = text.replace(/<[^>]*>?/gm, ' '); 
+            c = c.split(/(?:syn\.|ant\.)/i)[0];
+            
             if (wordToRemove) {
                 try {
                     let safeWord = wordToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     c = c.replace(new RegExp(safeWord, 'gi'), blankStyle);
                 } catch(e) {}
             }
+            
             return c.replace(/\s+/g, ' ').trim().replace(/^[;,\-:\.]+|[;,\-:\.]+$/g, "");
         }
 
         function goNext() {
             enforceFullscreen();
             if (historyIndex < historyArray.length - 1) {
-                historyIndex++; displayQuestion(historyArray[historyIndex]);
+                historyIndex++;
+                displayQuestion(historyArray[historyIndex]);
             } else generateQuestion();
         }
 
         function goBack() {
             enforceFullscreen();
             if (historyIndex > 0) {
-                historyIndex--; displayQuestion(historyArray[historyIndex]);
+                historyIndex--;
+                displayQuestion(historyArray[historyIndex]);
             }
         }
 
         function generateQuestion() {
             if (activeDeck.length === 0) {
-                alert("Deck complete!"); exitToDashboard(); return;
+                alert("Deck complete!");
+                exitToDashboard();
+                return;
             }
 
             canAnswer = false; 
             currentQuestionTarget = activeDeck.pop(); 
             
-            let qMode = 0; let badgeText = "Definition";
+            let qMode = 0; 
+            let badgeText = "Definition";
             if (activeDatasetId === 'idioms') {
                 let r = Math.random();
                 if (r < 0.33) { qMode = 1; badgeText = "Find the Idiom"; }
@@ -754,12 +627,15 @@
             }
 
             var options = [{ text: targetOptionText, isCorrect: true }];
+
             let targetLen = targetOptionText.length;
             let distractorPool = [];
             
             for(let i=0; i<40; i++) {
                 let rItem = master[Math.floor(Math.random() * master.length)];
-                if (rItem.word !== currentQuestionTarget.word) distractorPool.push(rItem);
+                if (rItem.word !== currentQuestionTarget.word) {
+                    distractorPool.push(rItem);
+                }
             }
 
             distractorPool.sort((a,b) => {
@@ -771,7 +647,9 @@
             for(let i=0; i<distractorPool.length && options.length < 4; i++) {
                 let rItem = distractorPool[i];
                 let dText = (qMode === 1 || qMode === 2) ? rItem.word : clean(rItem.def, rItem.word, "...");
-                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) options.push({ text: dText, isCorrect: false });
+                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) {
+                    options.push({ text: dText, isCorrect: false });
+                }
             }
 
             let attempts = 0;
@@ -779,227 +657,86 @@
                 attempts++;
                 let rItem = master[Math.floor(Math.random() * master.length)];
                 let dText = (qMode === 1 || qMode === 2) ? rItem.word : clean(rItem.def, rItem.word, "...");
-                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) options.push({ text: dText, isCorrect: false });
+                if (dText && dText.length > 1 && !options.find(o => o.text === dText)) {
+                    options.push({ text: dText, isCorrect: false });
+                }
             }
 
-            while(options.length < 4) options.push({ text: "None of the above", isCorrect: false });
-            options.sort(() => Math.random() - 0.5);
+            while(options.length < 4) {
+                options.push({ text: "None of the above", isCorrect: false });
+            }
+
+            options.sort(function() { return Math.random() - 0.5; });
             
-            var questionObj = { target: currentQuestionTarget, wordRef: currentQuestionTarget.word, displayPrompt: displayPrompt, badgeText: badgeText, options: options };
-            historyArray.push(questionObj); historyIndex++;
+            var questionObj = { 
+                target: currentQuestionTarget, 
+                wordRef: currentQuestionTarget.word,
+                displayPrompt: displayPrompt, 
+                badgeText: badgeText,
+                options: options 
+            };
+            
+            historyArray.push(questionObj);
+            historyIndex++;
             displayQuestion(questionObj);
         }
 
-        // --- DIRECT LINK CLEANER ---
-        function cleanImageLink(url) {
-            if (!url) return '';
-            if (url.includes('drive.google.com')) {
-                let idMatch = url.match(/[-\w]{25,}/);
-                if (idMatch) return `https://drive.google.com/thumbnail?id=${idMatch[0]}&sz=w600`;
-            }
-            if (url.includes('dropbox.com')) return url.replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com');
-            return url; 
-        }
-
-        function getDeterministicSeed(word) {
-            let seed = 0;
-            for(let i = 0; i < word.length; i++) {
-                seed += word.charCodeAt(i);
-            }
-            return seed;
-        }
-
-        // --- HIGH-PERFORMANCE ALPHA-AWARE BRIGHTNESS ENGINE ---
-        function applySmartContrast(imgElement, currentMode) {
-            try {
-                let canvas = document.createElement('canvas');
-                canvas.width = 64;
-                canvas.height = 64;
-                
-                let ctx = canvas.getContext('2d');
-                ctx.drawImage(imgElement, 0, 0, 64, 64);
-                
-                let imageData = ctx.getImageData(0, 0, 64, 64);
-                let data = imageData.data;
-                
-                let colorSum = 0;
-                let transparentPixels = 0;
-
-                for(let i = 0; i < data.length; i += 4) {
-                    let r = data[i]; 
-                    let g = data[i+1]; 
-                    let b = data[i+2];
-                    let a = data[i+3];
-
-                    if (a < 250) {
-                        transparentPixels++;
-                    }
-
-                    let alphaRatio = a / 255;
-                    let blendedR = (r * alphaRatio) + (255 * (1 - alphaRatio));
-                    let blendedG = (g * alphaRatio) + (255 * (1 - alphaRatio));
-                    let blendedB = (b * alphaRatio) + (255 * (1 - alphaRatio));
-                    
-                    colorSum += (blendedR*299 + blendedG*587 + blendedB*114) / 1000;
-                }
-                
-                let brightness = colorSum / (64 * 64);
-
-                if (transparentPixels > (64 * 64 * 0.05)) {
-                    imgElement.style.backgroundColor = "#ffffff";
-                    imgElement.style.padding = "15px"; 
-                    imgElement.style.borderRadius = "10px";
-                    imgElement.style.objectFit = "contain"; 
-                } else {
-                    imgElement.style.backgroundColor = "transparent";
-                    imgElement.style.padding = "0";
-                    imgElement.style.borderRadius = "0";
-                    imgElement.style.objectFit = "cover"; 
-                }
-
-                if(brightness < 60) {
-                    imgElement.style.filter = "brightness(3.0) contrast(1.3) saturate(1.4)";
-                } else if (brightness < 110) {
-                    imgElement.style.filter = "brightness(1.8) contrast(1.2) saturate(1.2)";
-                } else if (brightness < 150) {
-                    imgElement.style.filter = "brightness(1.3) contrast(1.1)";
-                } else {
-                    imgElement.style.filter = "none";
-                }
-            } catch(e) {
-                if (currentMode === 'sketch') {
-                    imgElement.style.backgroundColor = "#ffffff";
-                    imgElement.style.padding = "15px"; 
-                    imgElement.style.borderRadius = "10px";
-                    imgElement.style.objectFit = "contain"; 
-                } else {
-                    imgElement.style.backgroundColor = "transparent";
-                    imgElement.style.padding = "0";
-                    imgElement.style.borderRadius = "0";
-                    imgElement.style.objectFit = "cover"; 
-                }
-                imgElement.style.filter = "none";
-            }
-        }
-
         function displayQuestion(qObj) {
-            canAnswer = true; enforceFullscreen(); 
-            
-            windowRenderId++;
-            let currentExecutionLock = windowRenderId;
+            canAnswer = true;
+            enforceFullscreen(); 
             
             let badge = document.getElementById('question-type-badge');
-            if (activeDatasetId === 'idioms') { badge.style.display = 'inline-block'; badge.innerText = qObj.badgeText; } 
-            else { badge.style.display = 'none'; }
+            if (activeDatasetId === 'idioms') {
+                badge.style.display = 'inline-block';
+                badge.innerText = qObj.badgeText;
+            } else {
+                badge.style.display = 'none';
+            }
 
             document.getElementById('word-display').innerText = qObj.displayPrompt;
             
+            // --- UPDATED IMAGE ENGINE: Definition Meaning Extractor ---
             var hintImg = document.getElementById('hint-img');
-            hintImg.style.opacity = '0'; // Only fade out.
+            hintImg.style.opacity = '0'; 
 
-            let mode = appData.imageMode || 'sketch';
-            let targetSrc = '';
+            var tempImg = new Image();
+
+            tempImg.onload = function() { 
+                hintImg.src = tempImg.src; 
+                hintImg.style.opacity = '1'; 
+            };
+
+            // Safest Fallback Option: If image fails or definition parsing breaks
+            tempImg.onerror = function() {
+                this.onerror = null; 
+                this.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
+            };
+
+            // Step 1: Clean the definition text
+            let cleanDef = "";
+            if (qObj.target && qObj.target.def) {
+                cleanDef = qObj.target.def.replace(/[^a-zA-Z ]/g, '').toLowerCase();
+            }
+
+            // Step 2: Filter out filler words to find the core meaning
+            let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
             
-            let deterministicWordSeed = getDeterministicSeed(qObj.wordRef);
+            let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w));
 
-            if (mode === 'sketch' && qObj.target.sketch && qObj.target.sketch.length > 5) {
-                targetSrc = cleanImageLink(qObj.target.sketch);
-            } else if (mode === 'image' && qObj.target.image && qObj.target.image.length > 5) {
-                targetSrc = cleanImageLink(qObj.target.image);
-            } else if (mode === 'random') {
-                let keyword = (qObj.target.extra && qObj.target.extra.length > 2) ? qObj.target.extra.split(',')[0].replace(/[^a-zA-Z0-9 ]/g, '').trim() : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                if (keyword) {
-                    targetSrc = (deterministicWordSeed % 2 === 0) 
-                        ? `https://loremflickr.com/320/240/study,${keyword.replace(/\s+/g, ',')}?lock=${deterministicWordSeed}`
-                        : `https://image.pollinations.ai/prompt/${encodeURIComponent(keyword + ' flashcard simple vector art')}?width=320&height=240&nologo=true&seed=${deterministicWordSeed}`;
-                }
-            }
+            // Step 3: Sort by length (longer words usually carry more descriptive visual meaning)
+            defWords.sort((a, b) => b.length - a.length);
 
-            if (!targetSrc || targetSrc.trim() === '') {
-                let cleanDef = qObj.target && qObj.target.def ? qObj.target.def.replace(/[^a-zA-Z ]/g, '').toLowerCase() : "";
-                let stopWords = ['the', 'and', 'for', 'with', 'about', 'from', 'into', 'that', 'this', 'someone', 'something', 'make', 'have', 'very', 'much', 'without', 'which', 'what', 'when', 'where', 'who', 'how', 'state', 'being', 'quality', 'relating', 'person', 'thing', 'give', 'take', 'like', 'cause', 'action'];
-                let defWords = cleanDef.split(' ').filter(w => w.length > 3 && !stopWords.includes(w)).sort((a, b) => b.length - a.length);
-                let searchKeyword = defWords.length > 0 ? defWords[0] : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                targetSrc = `https://loremflickr.com/320/240/${searchKeyword},study?lock=${deterministicWordSeed}`;
-            }
+            // Step 4: Pick the best word, or fallback to the original vocabulary word
+            let searchKeyword = defWords.length > 0 ? defWords[0] : qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
 
-            // --- DECOUPLED CACHE HANDLER ---
-            let cacheKey = qObj.wordRef + "_" + mode;
-
-            function renderImageFromSrc(finalSrc) {
-                var tempImg = new Image();
-                tempImg.crossOrigin = "anonymous"; 
-
-                tempImg.onload = function() { 
-                    if (currentExecutionLock !== windowRenderId) return; 
-                    
-                    applySmartContrast(this, mode); 
-                    
-                    hintImg.style.filter = this.style.filter || 'none';
-                    hintImg.style.backgroundColor = this.style.backgroundColor || 'transparent';
-                    hintImg.style.padding = this.style.padding || '0';
-                    hintImg.style.borderRadius = this.style.borderRadius || '0';
-                    hintImg.style.objectFit = this.style.objectFit || 'cover';
-                    
-                    hintImg.src = this.src; 
-                    hintImg.style.opacity = '1'; 
-                };
-
-                tempImg.onerror = function() {
-                    if (currentExecutionLock !== windowRenderId) return; 
-                    
-                    let ultimateFallback = new Image();
-                    ultimateFallback.onload = function() {
-                        if (currentExecutionLock !== windowRenderId) return;
-                        hintImg.style.filter = 'none';
-                        hintImg.style.backgroundColor = 'transparent';
-                        hintImg.style.padding = '0';
-                        hintImg.style.objectFit = 'cover';
-                        hintImg.src = this.src;
-                        hintImg.style.opacity = '1';
-                    };
-                    ultimateFallback.onerror = function() {
-                        if (currentExecutionLock !== windowRenderId) return;
-                        hintImg.style.filter = 'none';
-                        hintImg.style.backgroundColor = 'transparent';
-                        hintImg.style.padding = '0';
-                        hintImg.style.objectFit = 'cover';
-                        hintImg.src = "https://cdn.jsdelivr.net/gh/microsoft/fluentui-emoji@main/assets/Books/3D/books_3d.png";
-                        hintImg.style.opacity = '1';
-                    };
-                    let fallbackKeyword = qObj.wordRef.split(' ')[0].replace(/[^a-zA-Z]/g, '');
-                    ultimateFallback.src = `https://picsum.photos/seed/${fallbackKeyword + deterministicWordSeed}/320/240`;
-                };
-
-                tempImg.src = finalSrc;
-            }
-
-            async function processAndLoadImage() {
-                // 1. Check if image is already saved in IndexedDB
-                let cachedBlob = await getCachedImageBlob(cacheKey);
-                
-                if (cachedBlob) {
-                    // Serve instantly from local disk cache
-                    renderImageFromSrc(URL.createObjectURL(cachedBlob));
-                } else {
-                    // 2. Fetch natively (Fast) and Fire-and-Forget the IDB save (Decoupled, no blocking Await)
-                    fetch(targetSrc).then(response => {
-                        if (response.ok) return response.blob();
-                        throw new Error("Network error");
-                    }).then(blob => {
-                        renderImageFromSrc(URL.createObjectURL(blob)); // Show immediately
-                        setCachedImageBlob(cacheKey, blob); // Save silently in background
-                    }).catch(e => {
-                        renderImageFromSrc(targetSrc); // Fallback if CORS prevents blob fetch
-                    });
-                }
-            }
-
-            processAndLoadImage();
-
+            // Step 5: Fetch image with STRICT child-safe context tags (school, study)
+            tempImg.src = `https://loremflickr.com/320/240/school,study,${searchKeyword}?random=${new Date().getTime()}`;
+            
             // -----------------------------------------------------------
+
             var list = document.getElementById('options-list');
             list.innerHTML = '';
+            
             let pData = appData.progress[activeDatasetId];
 
             qObj.options.forEach(function(opt) {
@@ -1020,7 +757,9 @@
                         var mIndex = pData.mistakes.indexOf(qObj.wordRef);
                         if(mIndex > -1) pData.mistakes.splice(mIndex, 1);
 
-                        if (currentMode === 'normal') pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
+                        if (currentMode === 'normal') {
+                            pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
+                        }
                         setTimeout(goNext, 800);
                     } else {
                         b.classList.add('wrong');
@@ -1032,12 +771,12 @@
 
                         if (currentMode === 'normal') {
                             activeDeck.push(qObj.target);
-                            pData.deckStates[currentDeckLabel] = activeDeck.map(w => w.word);
+                            pData.deckStates[currentDeckLabel] = activeDeck.map(function(w){return w.word;});
                         }
 
                         var allBtns = document.querySelectorAll('.option-btn');
                         for(var j=0; j<allBtns.length; j++) {
-                            if(allBtns[j].innerText === qObj.options.find(o => o.isCorrect).text) allBtns[j].classList.add('correct');
+                            if(allBtns[j].innerText === qObj.options.find(function(o){return o.isCorrect}).text) allBtns[j].classList.add('correct');
                         }
                     }
                     saveData(); 
@@ -1046,6 +785,7 @@
             });
         }
 
+        /* --- Gestures --- */
         var touchstartX = 0, touchendX = 0;
         var touchSurface = document.getElementById('touch-surface');
         

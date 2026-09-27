@@ -1,6 +1,8 @@
 // ==========================================
-// CONFIGURATION: YOUR DATASETS
+// data.js
 // ==========================================
+
+// CONFIGURATION: YOUR DATASETS
 const DATASETS = [
     { id: 'barron800', name: 'Barron\'s 800', file: 'barron800.csv' },
     { id: 'barron1500', name: 'Barron\'s 1500', file: 'barron1500.csv' },
@@ -9,26 +11,20 @@ const DATASETS = [
     { id: 'idioms', name: 'Master Idioms', file: 'Master_Idioms_Database.csv' }
 ];
 
-// ==========================================
 // GLOBAL STATE VARIABLES
-// ==========================================
 const DB_NAME = 'GRE_Elite_Database';
 const DB_VERSION = 1;
-
 let dbInstance = null;
-let activeDatasetId = null; 
+let activeDatasetId = null;
 let appData = { progress: {}, caches: {} };
-
 var master = [], decks = [], activeDeck = [];
 var historyArray = [], historyIndex = -1;
-var currentMode = 'normal'; 
+var currentMode = 'normal';
 var canAnswer = true;
 var currentDeckLabel = "";
-var currentQuestionTarget = null; 
+var currentQuestionTarget = null;
 
-// ==========================================
 // INDEXED-DB PERSISTENCE ENGINE
-// ==========================================
 function initDB() {
     return new Promise((resolve, reject) => {
         if (dbInstance) return resolve(dbInstance);
@@ -93,9 +89,7 @@ function importData(event) {
     reader.readAsText(file);
 }
 
-// ==========================================
 // DATASET DOWNLOADING & PARSING
-// ==========================================
 function selectDataset(id) {
     enforceFullscreen();
     activeDatasetId = id;
@@ -104,16 +98,15 @@ function selectDataset(id) {
         appData.progress[activeDatasetId] = { score: 0, streak: 0, mistakes: [], mastered: [], deckStates: {} };
         saveData();
     }
-
     document.getElementById('dataset-list').style.display = 'none';
     document.getElementById('btn-reload').style.display = 'inline-block';
-
+    
     if (appData.caches[activeDatasetId]) {
         parseAndChunk(appData.caches[activeDatasetId]);
         document.getElementById('dashboard').style.display = 'flex';
         document.getElementById('entry-screen').style.display = 'none';
     } else {
-        forceRefreshLibrary(); 
+        forceRefreshLibrary();
     }
 }
 
@@ -124,7 +117,7 @@ function forceRefreshLibrary() {
     document.getElementById('entry-screen').style.display = 'none';
     document.getElementById('loader').style.display = 'flex';
     document.getElementById('loader-text').innerText = `DOWNLOADING ${dsInfo.name.toUpperCase()}...`;
-
+    
     fetch(dsInfo.file)
         .then(response => {
             if (!response.ok) throw new Error("File not found on server.");
@@ -144,7 +137,7 @@ function forceRefreshLibrary() {
 }
 
 function parseAndChunk(raw) {
-    master = []; 
+    master = [];
     let rows = [];
     let row = [];
     let current = '';
@@ -156,47 +149,63 @@ function parseAndChunk(raw) {
         let char = raw[i];
         if (inQuotes) {
             if (char === '"') {
-                if (i + 1 < raw.length && raw[i + 1] === '"') { current += '"'; i++; } 
+                if (i + 1 < raw.length && raw[i + 1] === '"') { current += '"'; i++; }
                 else { inQuotes = false; }
             } else { current += char; }
         } else {
-            if (char === '"') { inQuotes = true; } 
-            else if (char === delimiter) { row.push(current.trim()); current = ''; } 
+            if (char === '"') { inQuotes = true; }
+            else if (char === delimiter) { row.push(current.trim()); current = ''; }
             else if (char === '\n' || char === '\r') {
                 row.push(current.trim());
                 if (row.length > 0 && row[0] !== '') rows.push(row);
                 row = []; current = '';
-                if (char === '\r' && i + 1 < raw.length && raw[i + 1] === '\n') i++; 
+                if (char === '\r' && i + 1 < raw.length && raw[i + 1] === '\n') i++;
             } else { current += char; }
         }
     }
+    
     if (current !== '' || row.length > 0) {
         row.push(current.trim());
         if (row.length > 0 && row[0] !== '') rows.push(row);
     }
-
-    for (let i = 0; i < rows.length; i++) { 
-        let word = rows[i][0]; let def = rows[i][1]; let extra = rows[i][2] || '';
+    
+    for (let i = 0; i < rows.length; i++) {
+        let word = rows[i][0];
+        let def = rows[i][1];
+        let extraData = rows[i][2] || '';
+        let extra = '';
+        let customImage = null;
         
         if(word && def) {
             word = word.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
             def = def.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
-            extra = extra.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
+            extraData = extraData.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').replace(/^"|"$/g, '').trim();
+            
+            if (extraData.startsWith('http') || extraData.startsWith('data:image')) {
+                customImage = extraData;
+            } else {
+                extra = extraData;
+            }
 
             if (word.length > 1 && def.length > 1 && word.toLowerCase() !== "word" && word.toLowerCase() !== "idiom") {
-                master.push({ word: word, def: def, extra: extra });
+                master.push({
+                    word: word,
+                    def: def,
+                    extra: extra,
+                    customImage: customImage
+                });
             }
         }
     }
-
+    
     let dsInfo = DATASETS.find(d => d.id === activeDatasetId);
     document.getElementById('dash-dataset-name').innerText = dsInfo.name.toUpperCase();
     document.getElementById('dash-total').innerText = master.length;
     master.sort(function(a, b) { return a.word.localeCompare(b.word); });
-
-    var minSize = Math.max(10, Math.ceil(master.length * 0.005)); 
-    var targetMax = Math.max(60, minSize * 2); 
-
+    
+    var minSize = Math.max(10, Math.ceil(master.length * 0.005));
+    var targetMax = Math.max(60, minSize * 2);
+    
     var letterGroups = {};
     master.forEach(function(item) {
         var letter = item.word.charAt(0).toUpperCase();
@@ -204,7 +213,7 @@ function parseAndChunk(raw) {
         if (!letterGroups[letter]) letterGroups[letter] = [];
         letterGroups[letter].push(item);
     });
-
+    
     decks = [];
     Object.keys(letterGroups).sort().forEach(function(l) {
         var wordsInLetter = letterGroups[l];
@@ -225,7 +234,7 @@ function parseAndChunk(raw) {
             }
         }
     });
-
+    
     updateDashStats();
     renderDecks();
 }
